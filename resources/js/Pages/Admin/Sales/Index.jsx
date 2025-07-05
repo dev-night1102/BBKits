@@ -200,23 +200,31 @@ export default function Index({ sales }) {
                                     </table>
 
                                     {/* Pagination */}
-                                    {sales.links && (
+                                    {sales.links && sales.links.length > 0 && (
                                         <div className="mt-6 flex justify-between">
                                             <div className="text-sm text-gray-700">
                                                 Mostrando {sales.from} a {sales.to} de {sales.total} resultados
                                             </div>
                                             <div className="flex space-x-2">
-                                                {sales.links.map((link, index) => (
-                                                    <Link
-                                                        key={index}
-                                                        href={link.url}
-                                                        className={`px-3 py-2 text-sm rounded-md ${
-                                                            link.active 
-                                                                ? 'bg-pink-600 text-white' 
-                                                                : 'bg-white text-gray-500 hover:text-gray-700'
-                                                        }`}
-                                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                                    />
+                                                {sales.links.filter(link => link && link.url !== null).map((link, index) => (
+                                                    link.url ? (
+                                                        <Link
+                                                            key={index}
+                                                            href={link.url}
+                                                            className={`px-3 py-2 text-sm rounded-md ${
+                                                                link.active 
+                                                                    ? 'bg-pink-600 text-white' 
+                                                                    : 'bg-white text-gray-500 hover:text-gray-700'
+                                                            }`}
+                                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                                        />
+                                                    ) : (
+                                                        <span
+                                                            key={index}
+                                                            className="px-3 py-2 text-sm rounded-md bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                                        />
+                                                    )
                                                 ))}
                                             </div>
                                         </div>

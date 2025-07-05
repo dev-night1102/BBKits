@@ -37,12 +37,20 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Vendas
                                 </NavLink>
                                 {(user.role === 'admin' || user.role === 'financeiro') && (
-                                    <NavLink
-                                        href={route('admin.sales.index')}
-                                        active={route().current('admin.sales.*')}
-                                    >
-                                        Painel Financeiro
-                                    </NavLink>
+                                    <>
+                                        <NavLink
+                                            href={route('admin.dashboard')}
+                                            active={route().current('admin.dashboard')}
+                                        >
+                                            Admin Dashboard
+                                        </NavLink>
+                                        <NavLink
+                                            href={route('admin.sales.index')}
+                                            active={route().current('admin.sales.*')}
+                                        >
+                                            Painel Financeiro
+                                        </NavLink>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -155,12 +163,20 @@ export default function AuthenticatedLayout({ header, children }) {
                             Vendas
                         </ResponsiveNavLink>
                         {(user.role === 'admin' || user.role === 'financeiro') && (
-                            <ResponsiveNavLink
-                                href={route('admin.sales.index')}
-                                active={route().current('admin.sales.*')}
-                            >
-                                Painel Financeiro
-                            </ResponsiveNavLink>
+                            <>
+                                <ResponsiveNavLink
+                                    href={route('admin.dashboard')}
+                                    active={route().current('admin.dashboard')}
+                                >
+                                    Admin Dashboard
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route('admin.sales.index')}
+                                    active={route().current('admin.sales.*')}
+                                >
+                                    Painel Financeiro
+                                </ResponsiveNavLink>
+                            </>
                         )}
                     </div>
 

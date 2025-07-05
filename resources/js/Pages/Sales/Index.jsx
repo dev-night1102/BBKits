@@ -1,8 +1,42 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
+import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 export default function Index({ sales }) {
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [saleToDelete, setSaleToDelete] = useState(null);
+    const { delete: destroy, processing } = useForm();
+
+    const handleDeleteClick = (sale) => {
+        setSaleToDelete(sale);
+        setShowDeleteModal(true);
+    };
+
+    const handleDeleteConfirm = () => {
+        if (saleToDelete) {
+            destroy(route('sales.destroy', saleToDelete.id), {
+                onSuccess: () => {
+                    toast.success('Venda excluída com sucesso!');
+                    setShowDeleteModal(false);
+                    setSaleToDelete(null);
+                },
+                onError: () => {
+                    toast.error('Erro ao excluir a venda.');
+                    setShowDeleteModal(false);
+                    setSaleToDelete(null);
+                }
+            });
+        }
+    };
+
+    const handleDeleteCancel = () => {
+        setShowDeleteModal(false);
+        setSaleToDelete(null);
+    };
+
     const getStatusBadge = (status) => {
         const badges = {
             pendente: 'bg-yellow-100 text-yellow-800',
@@ -71,7 +105,7 @@ export default function Index({ sales }) {
                                     <div className="mt-6">
                                         <Link href={route('sales.create')}>
                                             <PrimaryButton>
-                                                Registrar Primera Venda
+                                                Registrar Primeira Venda
                                             </PrimaryButton>
                                         </Link>
                                     </div>
@@ -135,6 +169,12 @@ export default function Index({ sales }) {
                                                                     >
                                                                         Editar
                                                                     </Link>
+                                                                    <button
+                                                                        onClick={() => handleDeleteClick(sale)}
+                                                                        className="text-red-600 hover:text-red-900"
+                                                                    >
+                                                                        Excluir
+                                                                    </button>
                                                                 </>
                                                             )}
                                                         </div>
@@ -145,23 +185,31 @@ export default function Index({ sales }) {
                                     </table>
 
                                     {/* Pagination */}
-                                    {sales.links && (
+                                    {sales.links && sales.links.length > 0 && (
                                         <div className="mt-6 flex justify-between">
                                             <div className="text-sm text-gray-700">
                                                 Mostrando {sales.from} a {sales.to} de {sales.total} resultados
                                             </div>
                                             <div className="flex space-x-2">
-                                                {sales.links.map((link, index) => (
-                                                    <Link
-                                                        key={index}
-                                                        href={link.url}
-                                                        className={`px-3 py-2 text-sm rounded-md ${
-                                                            link.active 
-                                                                ? 'bg-indigo-600 text-white' 
-                                                                : 'bg-white text-gray-500 hover:text-gray-700'
-                                                        }`}
-                                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                                    />
+                                                {sales.links.filter(link => link && link.url !== null).map((link, index) => (
+                                                    link.url ? (
+                                                        <Link
+                                                            key={index}
+                                                            href={link.url}
+                                                            className={`px-3 py-2 text-sm rounded-md ${
+                                                                link.active 
+                                                                    ? 'bg-indigo-600 text-white' 
+                                                                    : 'bg-white text-gray-500 hover:text-gray-700'
+                                                            }`}
+                                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                                        />
+                                                    ) : (
+                                                        <span
+                                                            key={index}
+                                                            className="px-3 py-2 text-sm rounded-md bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                                        />
+                                                    )
                                                 ))}
                                             </div>
                                         </div>
@@ -172,6 +220,15 @@ export default function Index({ sales }) {
                     </div>
                 </div>
             </div>
+
+            <DeleteConfirmationModal
+                show={showDeleteModal}
+                onClose={handleDeleteCancel}
+                onConfirm={handleDeleteConfirm}
+                title="Excluir Venda"
+                message={saleToDelete ? `Tem certeza que deseja excluir a venda para ${saleToDelete.client_name}? Esta ação não pode ser desfeita.` : ''}
+                processing={processing}
+            />
         </AuthenticatedLayout>
     );
 }

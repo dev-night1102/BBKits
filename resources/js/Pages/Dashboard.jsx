@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage } from '@inertiajs/react';
 
 export default function Dashboard() {
-    const { auth } = usePage().props;
+    const { auth, gamification } = usePage().props;
     
     return (
         <AuthenticatedLayout
@@ -107,16 +107,137 @@ export default function Dashboard() {
                     <div className="p-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg shadow-xs">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h4 className="mb-2 font-semibold text-white">Pronta para vender mais?</h4>
-                                <p className="text-pink-100">Registre uma nova venda e aumente suas comissões!</p>
+                                <h4 className="mb-2 font-semibold text-white">
+                                    {auth.user.role === 'vendedora' ? 'Pronta para vender mais?' : 'Gerencie o Sistema BBKits'}
+                                </h4>
+                                <p className="text-pink-100">
+                                    {auth.user.role === 'vendedora' ? 
+                                        'Registre uma nova venda e aumente suas comissões!' : 
+                                        'Acesse as ferramentas administrativas'}
+                                </p>
                             </div>
-                            <div>
-                                <a href="/sales/create" className="px-4 py-2 text-sm font-medium text-pink-600 bg-white rounded-lg hover:bg-pink-50 transition-colors">
-                                    Nova Venda
-                                </a>
+                            <div className="flex space-x-3">
+                                {auth.user.role === 'vendedora' ? (
+                                    <>
+                                        <a href="/sales/create" className="px-4 py-2 text-sm font-medium text-pink-600 bg-white rounded-lg hover:bg-pink-50 transition-colors">
+                                            Nova Venda
+                                        </a>
+                                        <a href="/reports/sales" className="px-4 py-2 text-sm font-medium text-white bg-pink-600 bg-opacity-30 border border-white border-opacity-30 rounded-lg hover:bg-opacity-40 transition-colors">
+                                            Relatório PDF
+                                        </a>
+                                    </>
+                                ) : (
+                                    <>
+                                        <a href="/admin/dashboard" className="px-4 py-2 text-sm font-medium text-pink-600 bg-white rounded-lg hover:bg-pink-50 transition-colors">
+                                            Admin Dashboard
+                                        </a>
+                                        <a href="/admin/sales" className="px-4 py-2 text-sm font-medium text-white bg-pink-600 bg-opacity-30 border border-white border-opacity-30 rounded-lg hover:bg-opacity-40 transition-colors">
+                                            Aprovar Vendas
+                                        </a>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
+                    
+                    {/* Gamification Section for Vendedoras */}
+                    {auth.user.role === 'vendedora' && gamification && (
+                        <>
+                            {/* User Level and Progress */}
+                            <div className="mt-8 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl p-8 text-white">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h2 className="text-2xl font-bold mb-2">
+                                            {gamification.level.icon} Nível {gamification.level.level}
+                                        </h2>
+                                        <p className="text-pink-100">
+                                            {gamification.level.message}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-3xl font-bold">
+                                            {Math.round(gamification.level.progress)}%
+                                        </div>
+                                        <div className="text-sm text-pink-200">Progresso</div>
+                                    </div>
+                                </div>
+                                <div className="w-full bg-white bg-opacity-30 rounded-full h-3 mb-4">
+                                    <div 
+                                        className="bg-white h-3 rounded-full transition-all duration-300" 
+                                        style={{width: `${gamification.level.progress}%`}}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            {/* Motivational Quote */}
+                            <div className="mt-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white">
+                                <h3 className="text-lg font-bold mb-3">🎆 Frase Motivacional do Dia</h3>
+                                <p className="text-lg italic">
+                                    "{gamification.motivationalQuote}"
+                                </p>
+                            </div>
+
+                            {/* Achievements */}
+                            {gamification.achievements && gamification.achievements.length > 0 && (
+                                <div className="mt-8 bg-white rounded-2xl p-6 shadow-lg">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4">🏆 Suas Conquistas</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        {gamification.achievements.map((achievement, index) => (
+                                            <div key={index} className="bg-gradient-to-br from-yellow-100 to-orange-100 p-4 rounded-lg text-center border border-yellow-200">
+                                                <div className="text-3xl mb-2">{achievement.icon}</div>
+                                                <div className="font-semibold text-gray-900 text-sm">{achievement.name}</div>
+                                                <div className="text-xs text-gray-600 mt-1">{achievement.description}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Monthly Ranking */}
+                            {gamification.ranking && gamification.ranking.length > 0 && (
+                                <div className="mt-8 bg-white rounded-2xl p-6 shadow-lg">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4">🏅 Ranking Mensal</h3>
+                                    <div className="space-y-3">
+                                        {gamification.ranking.slice(0, 5).map((item) => (
+                                            <div key={item.user.id} className={`flex items-center justify-between p-3 rounded-lg ${
+                                                item.user.id === auth.user.id ? 'bg-pink-100 border-2 border-pink-300' : 'bg-gray-50'
+                                            }`}>
+                                                <div className="flex items-center">
+                                                    <div className="flex items-center mr-3">
+                                                        <span className="text-2xl mr-2">{item.badge.icon}</span>
+                                                        <span className="font-bold text-lg">{item.position}º</span>
+                                                    </div>
+                                                    <div>
+                                                        <div className={`font-semibold ${
+                                                            item.user.id === auth.user.id ? 'text-pink-800' : 'text-gray-900'
+                                                        }`}>
+                                                            {item.user.name} 
+                                                            {item.user.id === auth.user.id && ' (Você)'}
+                                                        </div>
+                                                        <div className="text-sm text-gray-600">
+                                                            {item.monthly_sales_count} vendas • {item.level.level}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="font-bold text-green-600">
+                                                        R$ {new Intl.NumberFormat('pt-BR').format(item.monthly_total)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {gamification.userPosition > 5 && (
+                                        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                            <div className="text-center text-blue-800">
+                                                💪 Você está na {gamification.userPosition}ª posição! Continue vendendo para subir no ranking!
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>

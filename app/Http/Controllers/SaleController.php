@@ -6,6 +6,7 @@ use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use App\Services\PDFReportService;
 
 class SaleController extends Controller
 {
@@ -158,5 +159,24 @@ class SaleController extends Controller
         ]);
         
         return back()->with('message', 'Venda recusada.');
+    }
+    
+    // PDF Report methods
+    public function generateSalesReport(Request $request)
+    {
+        $month = $request->get('month');
+        $year = $request->get('year');
+        
+        $pdfService = new PDFReportService();
+        return $pdfService->generateSalesReport(auth()->user(), $month, $year);
+    }
+    
+    public function generateCommissionReport(Request $request)
+    {
+        $month = $request->get('month');
+        $year = $request->get('year');
+        
+        $pdfService = new PDFReportService();
+        return $pdfService->generateCommissionReport(auth()->user(), $month, $year);
     }
 }
