@@ -1,22 +1,30 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+    <title inertia>{{ config('app.name', 'BBKits') }}</title>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/png">
 
-        <!-- Scripts -->
-        @routes
-        @viteReactRefresh
-        @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
-        @inertiaHead
-    </head>
-    <body class="font-sans antialiased">
-        @inertia
-    </body>
+    {{-- Fonts --}}
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet">
+
+    {{-- Laravel routes --}}
+    @routes
+
+    {{-- Vite React Refresh (dev only) --}}
+    @viteReactRefresh
+
+    {{-- Vite Assets (dev + production) --}}
+    @vite(['resources/js/app.jsx', 'resources/css/app.css'])
+
+    {{-- Inertia Head --}}
+    @inertiaHead
+</head>
+<body class="font-sans antialiased text-gray-900 bg-white dark:bg-black dark:text-white">
+    @inertia
+</body>
 </html>
