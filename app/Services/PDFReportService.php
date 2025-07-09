@@ -35,12 +35,19 @@ class PDFReportService
             'commission_earned' => $this->calculateCommission($user, $month, $year),
         ];
 
+        $performanceLevel = $this->getPerformanceLevel($summary['total_revenue']);
+        $motivationalMessage = $this->getMotivationalMessage($performanceLevel, $summary['total_revenue']);
+        $salesHistory = $this->getSalesHistory($user, 6);
+
         $data = [
             'user' => $user,
             'sales' => $sales,
             'summary' => $summary,
             'month_name' => $monthName,
             'generated_at' => now()->format('d/m/Y H:i'),
+            'performance_level' => $performanceLevel,
+            'motivational_message' => $motivationalMessage,
+            'sales_history' => $salesHistory,
         ];
 
         $pdf = PDF::loadView('reports.sales', $data)
@@ -188,5 +195,76 @@ class PDFReportService
         }
         
         return 0; // No commission below R$40k
+    }
+
+    private function getPerformanceLevel(float $revenue): string
+    {
+        if ($revenue >= 60000) {
+            return 'elite';
+        } elseif ($revenue >= 50000) {
+            return 'avancada';
+        } elseif ($revenue >= 40000) {
+            return 'intermediaria';
+        } else {
+            return 'iniciante';
+        }
+    }
+
+    private function getMotivationalMessage(string $level, float $revenue): array
+    {
+        $messages = [
+            'elite' => [
+                'title' => '🏆 Vendedora Elite BBKits!',
+                'message' => 'Parabéns! Você é uma verdadeira estrela da equipe BBKits. Seu desempenho excepcional inspira toda a equipe!',
+                'achievement' => 'Meta ultrapassada com excelência!',
+                'icon' => '👑'
+            ],
+            'avancada' => [
+                'title' => '⭐ Vendedora Avançada!',
+                'message' => 'Excelente trabalho! Você está entre as melhores vendedoras BBKits. Continue brilhando!',
+                'achievement' => 'Desempenho acima da média!',
+                'icon' => '🌟'
+            ],
+            'intermediaria' => [
+                'title' => '💪 Vendedora Intermediária!',
+                'message' => 'Ótimo trabalho! Você atingiu sua meta e está no caminho certo para se tornar uma vendedora avançada.',
+                'achievement' => 'Meta alcançada com sucesso!',
+                'icon' => '🎯'
+            ],
+            'iniciante' => [
+                'title' => '🌱 Vendedora em Crescimento',
+                'message' => $revenue >= 30000 ? 
+                    'Você está quase lá! Faltam apenas R$ ' . number_format(40000 - $revenue, 2, ',', '.') . ' para atingir sua meta e começar a ganhar comissões!' :
+                    'Cada venda é um passo importante. Continue persistindo e logo você alcançará suas metas!',
+                'achievement' => 'Em desenvolvimento constante',
+                'icon' => '🚀'
+            ]
+        ];
+
+        return $messages[$level];
+    }
+
+    public function getSalesHistory(User $user, int $months = 6): array
+    {
+        $history = [];
+        $currentDate = Carbon::now();
+
+        for ($i = 0; $i < $months; $i++) {
+            $month = $currentDate->copy()->subMonths($i);
+            $revenue = Sale::where('user_id', $user->id)
+                ->where('status', 'aprovado')
+                ->whereYear('payment_date', $month->year)
+                ->whereMonth('payment_date', $month->month)
+                ->sum('received_amount');
+
+            $history[] = [
+                'month' => $month->translatedFormat('F/Y'),
+                'revenue' => $revenue,
+                'commission' => $this->calculateCommission($user, $month->month, $month->year),
+                'performance' => $this->getPerformanceLevel($revenue)
+            ];
+        }
+
+        return array_reverse($history);
     }
 }

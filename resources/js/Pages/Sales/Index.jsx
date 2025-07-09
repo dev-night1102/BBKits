@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
+import ResponsiveTable from '@/Components/ResponsiveTable';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -379,93 +380,79 @@ export default function Index({ sales }) {
                                                 </div>
                                             </div>
 
-                                            <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-transparent hover:border-pink-200 transition-all duration-300">
-                                                <table className="min-w-full">
-                                                    <thead className="table-header">
-                                                        <tr>
-                                                            <th className="px-6 py-4 text-left text-sm font-bold">
-                                                                <i className="fas fa-user mr-2"></i>
-                                                                Cliente
-                                                            </th>
-                                                            <th className="px-6 py-4 text-left text-sm font-bold">
-                                                                <i className="fas fa-money-bill-wave mr-2"></i>
-                                                                Valor Total
-                                                            </th>
-                                                            <th className="px-6 py-4 text-left text-sm font-bold">
-                                                                <i className="fas fa-hand-holding-usd mr-2"></i>
-                                                                Valor Recebido
-                                                            </th>
-                                                            <th className="px-6 py-4 text-left text-sm font-bold">
-                                                                <i className="fas fa-calendar-alt mr-2"></i>
-                                                                Data Pagamento
-                                                            </th>
-                                                            <th className="px-6 py-4 text-left text-sm font-bold">
-                                                                <i className="fas fa-flag mr-2"></i>
-                                                                Status
-                                                            </th>
-                                                            <th className="px-6 py-4 text-left text-sm font-bold">
-                                                                <i className="fas fa-cogs mr-2"></i>
-                                                                Ações
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="bg-white">
-                                                        {sales.data.map((sale, index) => (
-                                                            <tr key={sale.id} className={`table-row ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
-                                                                <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-yellow-400 rounded-full flex items-center justify-center text-white font-bold">
-                                                                            {sale.client_name.charAt(0).toUpperCase()}
-                                                                        </div>
-                                                                        {sale.client_name}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-4 text-sm font-bold text-green-600">
-                                                                    {formatCurrency(sale.total_amount)}
-                                                                </td>
-                                                                <td className="px-6 py-4 text-sm font-bold text-blue-600">
-                                                                    {formatCurrency(sale.received_amount)}
-                                                                </td>
-                                                                <td className="px-6 py-4 text-sm text-gray-600 font-medium">
-                                                                    📅 {formatDate(sale.payment_date)}
-                                                                </td>
-                                                                <td className="px-6 py-4 text-sm">
-                                                                    {getStatusBadge(sale.status)}
-                                                                </td>
-                                                                <td className="px-6 py-4 text-sm font-medium">
-                                                                    <div className="flex gap-2">
+                                            <ResponsiveTable
+                                                data={sales.data}
+                                                keyField="id"
+                                                columns={[
+                                                    {
+                                                        header: 'Cliente',
+                                                        accessor: 'client_name',
+                                                        render: (sale) => (
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-yellow-400 rounded-full flex items-center justify-center text-white font-bold">
+                                                                    {sale.client_name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <span className="font-semibold">{sale.client_name}</span>
+                                                            </div>
+                                                        )
+                                                    },
+                                                    {
+                                                        header: 'Valor Total',
+                                                        accessor: 'total_amount',
+                                                        render: (sale) => <span className="font-bold text-green-600">{formatCurrency(sale.total_amount)}</span>,
+                                                        mobileQuickView: true
+                                                    },
+                                                    {
+                                                        header: 'Valor Recebido',
+                                                        accessor: 'received_amount',
+                                                        render: (sale) => <span className="font-bold text-blue-600">{formatCurrency(sale.received_amount)}</span>
+                                                    },
+                                                    {
+                                                        header: 'Data Pagamento',
+                                                        accessor: 'payment_date',
+                                                        render: (sale) => <span className="text-gray-600 font-medium">📅 {formatDate(sale.payment_date)}</span>
+                                                    },
+                                                    {
+                                                        header: 'Status',
+                                                        accessor: 'status',
+                                                        render: (sale) => getStatusBadge(sale.status),
+                                                        mobileQuickView: true
+                                                    },
+                                                    {
+                                                        header: 'Ações',
+                                                        accessor: 'actions',
+                                                        render: (sale) => (
+                                                            <div className="flex gap-2">
+                                                                <Link 
+                                                                    href={route('sales.show', sale.id)}
+                                                                    className="action-btn action-btn-view"
+                                                                >
+                                                                    <i className="fas fa-eye mr-1"></i>
+                                                                    Ver
+                                                                </Link>
+                                                                {sale.status === 'pendente' && (
+                                                                    <>
                                                                         <Link 
-                                                                            href={route('sales.show', sale.id)}
-                                                                            className="action-btn action-btn-view"
+                                                                            href={route('sales.edit', sale.id)}
+                                                                            className="action-btn action-btn-edit"
                                                                         >
-                                                                            <i className="fas fa-eye mr-1"></i>
-                                                                            Ver
+                                                                            <i className="fas fa-edit mr-1"></i>
+                                                                            Editar
                                                                         </Link>
-                                                                        {sale.status === 'pendente' && (
-                                                                            <>
-                                                                                <Link 
-                                                                                    href={route('sales.edit', sale.id)}
-                                                                                    className="action-btn action-btn-edit"
-                                                                                >
-                                                                                    <i className="fas fa-edit mr-1"></i>
-                                                                                    Editar
-                                                                                </Link>
-                                                                                <button
-                                                                                    onClick={() => handleDeleteClick(sale)}
-                                                                                    className="action-btn action-btn-delete"
-                                                                                >
-                                                                                    <i className="fas fa-trash mr-1"></i>
-                                                                                    Excluir
-                                                                                </button>
-                                                                            </>
-                                                                        )}
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                                        <button
+                                                                            onClick={() => handleDeleteClick(sale)}
+                                                                            className="action-btn action-btn-delete"
+                                                                        >
+                                                                            <i className="fas fa-trash mr-1"></i>
+                                                                            Excluir
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    }
+                                                ]}
+                                            />
 
                                             {/* Pagination */}
                                             {sales.links && sales.links.length > 0 && (

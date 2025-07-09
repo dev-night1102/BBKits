@@ -1,4 +1,4 @@
-import{J as x,x as g,j as e,t as u}from"./app-Bb6oJ2s4.js";import"./TextInput-D2E5rXH8.js";import{z as h}from"./transition-C7WWg7nb.js";function y({mustVerifyEmail:n,status:l,className:c=""}){const t=x().props.auth.user,{data:i,setData:s,patch:d,errors:r,processing:o,recentlySuccessful:m}=g({name:t.name,email:t.email}),p=a=>{a.preventDefault(),d(route("profile.update"))};return e.jsxs(e.Fragment,{children:[e.jsx("style",{children:`
+import{J as x,x as g,j as e,t as u}from"./app-BsWHPeRh.js";import"./TextInput-D2D_cphq.js";import{z as h}from"./transition-BEFkAd42.js";function y({mustVerifyEmail:n,status:l,className:c=""}){const t=x().props.auth.user,{data:i,setData:s,patch:d,errors:r,processing:o,recentlySuccessful:m}=g({name:t.name,email:t.email}),p=a=>{a.preventDefault(),d(route("profile.update"))};return e.jsxs(e.Fragment,{children:[e.jsx("style",{children:`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
                 
                 :root {

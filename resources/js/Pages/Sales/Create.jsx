@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
+import ResponsiveForm, { FormSection, FormField, MobileFormActions } from '@/Components/ResponsiveForm';
 import toast from 'react-hot-toast';
 
 export default function Create() {

@@ -7,9 +7,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use App\Services\PDFReportService;
+use App\Services\NotificationService;
 
 class SaleController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function index()
     {
         $sales = Sale::with('user')
@@ -47,7 +55,9 @@ class SaleController extends Controller
         $validated['user_id'] = auth()->id();
         $validated['status'] = 'pendente';
 
-        Sale::create($validated);
+        $sale = Sale::create($validated);
+        
+        $this->notificationService->notifyNewSale($sale);
 
         return redirect()->route('sales.index')->with('message', 'Venda registrada com sucesso!');
     }
@@ -138,6 +148,8 @@ class SaleController extends Controller
             'approved_at' => now()
         ]);
         
+        $this->notificationService->notifySaleApproved($sale);
+        
         return back()->with('message', 'Venda aprovada com sucesso!');
     }
     
@@ -157,6 +169,8 @@ class SaleController extends Controller
             'rejected_at' => now(),
             'rejection_reason' => $validated['rejection_reason']
         ]);
+        
+        $this->notificationService->notifySaleRejected($sale, $validated['rejection_reason']);
         
         return back()->with('message', 'Venda recusada.');
     }

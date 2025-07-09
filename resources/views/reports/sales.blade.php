@@ -128,6 +128,15 @@
         <div class="subtitle">Relatório Individual de Vendas</div>
     </div>
 
+    @if(isset($motivational_message))
+    <div style="background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 25px; text-align: center;">
+        <div style="font-size: 28px; margin-bottom: 10px;">{{ $motivational_message['icon'] }}</div>
+        <h2 style="font-size: 20px; margin: 0 0 10px 0;">{{ $motivational_message['title'] }}</h2>
+        <p style="margin: 0 0 5px 0; font-size: 14px;">{{ $motivational_message['message'] }}</p>
+        <p style="margin: 0; font-size: 12px; font-style: italic;">{{ $motivational_message['achievement'] }}</p>
+    </div>
+    @endif
+
     <div class="info-section">
         <div class="info-grid">
             <div>
@@ -223,9 +232,48 @@
     </div>
     @endif
 
+    @if(isset($sales_history) && count($sales_history) > 0)
+    <div style="margin-top: 30px; page-break-inside: avoid;">
+        <h3 style="color: #ec4899; border-bottom: 2px solid #ec4899; padding-bottom: 10px; margin-bottom: 15px;">Histórico de Performance</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8f9fa;">
+                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #ddd;">Mês</th>
+                    <th style="padding: 8px; text-align: right; border-bottom: 2px solid #ddd;">Receita</th>
+                    <th style="padding: 8px; text-align: right; border-bottom: 2px solid #ddd;">Comissão</th>
+                    <th style="padding: 8px; text-align: center; border-bottom: 2px solid #ddd;">Nível</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($sales_history as $month)
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ $month['month'] }}</td>
+                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">R$ {{ number_format($month['revenue'], 2, ',', '.') }}</td>
+                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">R$ {{ number_format($month['commission'], 2, ',', '.') }}</td>
+                    <td style="padding: 8px; text-align: center; border-bottom: 1px solid #eee;">
+                        @if($month['performance'] == 'elite')
+                            <span style="color: #d97706;">👑 Elite</span>
+                        @elseif($month['performance'] == 'avancada')
+                            <span style="color: #7c3aed;">⭐ Avançada</span>
+                        @elseif($month['performance'] == 'intermediaria')
+                            <span style="color: #059669;">🎯 Intermediária</span>
+                        @else
+                            <span style="color: #6b7280;">🌱 Iniciante</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+
     <div class="footer">
         <p>Este relatório foi gerado automaticamente pelo Sistema BBKits</p>
         <p>BBKits - Bolsas Premium para Maternidade</p>
+        <p style="font-size: 12px; color: #ec4899; margin-top: 10px;">
+            "Você não vende bolsas. Você entrega histórias, segurança e amor. 💼👶"
+        </p>
     </div>
 </body>
 </html>

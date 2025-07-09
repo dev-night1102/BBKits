@@ -537,6 +537,12 @@ export default function Dashboard({ stats, topPerformers, recentSales, monthlyDa
                                         >
                                             📊 Ver Relatórios
                                         </a>
+                                        <a 
+                                            href={`/admin/export/sales?month=${new Date().getMonth() + 1}&year=${new Date().getFullYear()}`}
+                                            className="quick-action-btn px-6 py-3 text-sm font-semibold text-white rounded-2xl transition-all duration-300 hover:scale-105"
+                                        >
+                                            📥 Exportar Excel
+                                        </a>
                                     </div>
                                 </div>
                             </div>

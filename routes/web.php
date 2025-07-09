@@ -3,6 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -58,11 +60,21 @@ Route::middleware('auth')->group(function () {
         
         // PDF Report routes
         Route::get('/admin/reports/team', [AdminController::class, 'generateTeamReport'])->name('admin.reports.team');
+        
+        // Excel Export routes
+        Route::get('/admin/export/sales', [ExportController::class, 'exportSales'])->name('admin.export.sales');
+        Route::get('/admin/export/commissions', [ExportController::class, 'exportCommissions'])->name('admin.export.commissions');
     });
     
     // Sales report routes (accessible by sales users for their own reports)
     Route::get('/reports/sales', [SaleController::class, 'generateSalesReport'])->name('reports.sales');
     Route::get('/reports/commission', [SaleController::class, 'generateCommissionReport'])->name('reports.commission');
+    
+    // Notification routes
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
     
     // Test PDF route (temporary for debugging)
     Route::get('/test-pdf', function () {
