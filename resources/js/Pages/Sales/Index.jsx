@@ -39,11 +39,11 @@ export default function Index({ sales }) {
 
     const getStatusBadge = (status) => {
         const badges = {
-            pendente: 'bg-yellow-100 text-yellow-800',
-            aprovado: 'bg-green-100 text-green-800',
-            recusado: 'bg-red-100 text-red-800',
-            cancelado: 'bg-gray-100 text-gray-800',
-            estornado: 'bg-purple-100 text-purple-800'
+            pendente: 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300',
+            aprovado: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300',
+            recusado: 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300',
+            cancelado: 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300',
+            estornado: 'bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300'
         };
         
         const labels = {
@@ -54,8 +54,17 @@ export default function Index({ sales }) {
             estornado: 'Estornado'
         };
 
+        const icons = {
+            pendente: '⏳',
+            aprovado: '✅',
+            recusado: '❌',
+            cancelado: '⚪',
+            estornado: '🔄'
+        };
+
         return (
-            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badges[status]}`}>
+            <span className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${badges[status]} shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105`}>
+                <span>{icons[status]}</span>
                 {labels[status]}
             </span>
         );
@@ -73,153 +82,431 @@ export default function Index({ sales }) {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Minhas Vendas
-                    </h2>
-                    <Link href={route('sales.create')}>
-                        <PrimaryButton>
-                            Nova Venda
-                        </PrimaryButton>
-                    </Link>
-                </div>
-            }
-        >
+        <>
             <Head title="Vendas" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="p-6 text-gray-900">
-                            {sales.data.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhuma venda registrada</h3>
-                                    <p className="mt-1 text-sm text-gray-500">
-                                        Comece registrando sua primeira venda.
-                                    </p>
-                                    <div className="mt-6">
-                                        <Link href={route('sales.create')}>
-                                            <PrimaryButton>
-                                                Registrar Primeira Venda
-                                            </PrimaryButton>
-                                        </Link>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                    Cliente
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                    Valor Total
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                    Valor Recebido
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                    Data Pagamento
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                    Status
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                    Ações
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200 bg-white">
-                                            {sales.data.map((sale) => (
-                                                <tr key={sale.id} className="hover:bg-gray-50">
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                                        {sale.client_name}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                        {formatCurrency(sale.total_amount)}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                        {formatCurrency(sale.received_amount)}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                        {formatDate(sale.payment_date)}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                        {getStatusBadge(sale.status)}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
-                                                        <div className="flex space-x-2">
-                                                            <Link 
-                                                                href={route('sales.show', sale.id)}
-                                                                className="text-indigo-600 hover:text-indigo-900"
-                                                            >
-                                                                Ver
-                                                            </Link>
-                                                            {sale.status === 'pendente' && (
-                                                                <>
-                                                                    <Link 
-                                                                        href={route('sales.edit', sale.id)}
-                                                                        className="text-yellow-600 hover:text-yellow-900"
-                                                                    >
-                                                                        Editar
-                                                                    </Link>
-                                                                    <button
-                                                                        onClick={() => handleDeleteClick(sale)}
-                                                                        className="text-red-600 hover:text-red-900"
-                                                                    >
-                                                                        Excluir
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+            {/* Add custom styles matching the standard design */}
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+                
+                :root {
+                    --primary-color: #D4A574;
+                    --secondary-color: #F5E6D3;
+                    --accent-color: #E8B4CB;
+                    --accent-dark: #C8869B;
+                    --text-dark: #2C2C2C;
+                    --text-light: #666;
+                    --white: #FFFFFF;
+                    --gradient: linear-gradient(135deg, #D4A574 0%, #E8B4CB 100%);
+                    --gradient-soft: linear-gradient(135deg, #F5E6D3 0%, #FFFFFF 100%);
+                    --gradient-hero: linear-gradient(135deg, rgba(212, 165, 116, 0.95) 0%, rgba(232, 180, 203, 0.95) 100%);
+                    --shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+                    --shadow-hover: 0 25px 50px rgba(0, 0, 0, 0.2);
+                    --shadow-glow: 0 0 30px rgba(212, 165, 116, 0.3);
+                }
 
-                                    {/* Pagination */}
-                                    {sales.links && sales.links.length > 0 && (
-                                        <div className="mt-6 flex justify-between">
-                                            <div className="text-sm text-gray-700">
-                                                Mostrando {sales.from} a {sales.to} de {sales.total} resultados
+                * {
+                    font-family: 'Poppins', sans-serif;
+                }
+
+                .sales-bg {
+                    background: linear-gradient(135deg, #F5E6D3 0%, #FFFFFF 50%, #F0F9FF 100%);
+                    min-height: 100vh;
+                }
+
+                .card-gradient {
+                    background: var(--gradient-soft);
+                    border-radius: 25px;
+                    box-shadow: var(--shadow);
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    border: 2px solid transparent;
+                    backdrop-filter: blur(10px);
+                }
+
+                .card-gradient:hover {
+                    transform: translateY(-5px);
+                    box-shadow: var(--shadow-hover);
+                    border-color: var(--primary-color);
+                }
+
+                .table-row {
+                    transition: all 0.3s ease;
+                    border-radius: 15px;
+                    margin: 8px 0;
+                }
+
+                .table-row:hover {
+                    background: var(--gradient-soft) !important;
+                    transform: translateX(5px);
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                }
+
+                .btn-gradient {
+                    background: var(--gradient);
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                    overflow: hidden;
+                    border-radius: 15px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+
+                .btn-gradient::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                    transition: left 0.6s;
+                }
+
+                .btn-gradient:hover::before {
+                    left: 100%;
+                }
+
+                .btn-gradient:hover {
+                    transform: translateY(-3px);
+                    box-shadow: var(--shadow-hover);
+                }
+
+                .action-btn {
+                    padding: 8px 16px;
+                    border-radius: 10px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
+                    text-decoration: none;
+                    display: inline-block;
+                    margin: 2px;
+                }
+
+                .action-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                }
+
+                .action-btn-view {
+                    background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+                    color: white;
+                }
+
+                .action-btn-edit {
+                    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+                    color: white;
+                }
+
+                .action-btn-delete {
+                    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+                    color: white;
+                }
+
+                .floating-particles {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    overflow: hidden;
+                    pointer-events: none;
+                    z-index: 1;
+                }
+
+                .particle {
+                    position: absolute;
+                    background: rgba(212, 165, 116, 0.1);
+                    border-radius: 50%;
+                    animation: float 15s infinite linear;
+                }
+
+                @keyframes float {
+                    0% {
+                        transform: translateY(100vh) rotate(0deg);
+                        opacity: 0;
+                    }
+                    10% {
+                        opacity: 1;
+                    }
+                    90% {
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: translateY(-100px) rotate(360deg);
+                        opacity: 0;
+                    }
+                }
+
+                .header-gradient {
+                    background: var(--gradient);
+                    color: white;
+                    border-radius: 20px;
+                    padding: 20px;
+                    margin-bottom: 30px;
+                    box-shadow: var(--shadow);
+                }
+
+                .table-header {
+                    background: var(--gradient);
+                    color: white;
+                    border-radius: 15px 15px 0 0;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+
+                .empty-state {
+                    background: var(--gradient-soft);
+                    border-radius: 25px;
+                    padding: 60px 40px;
+                    text-align: center;
+                    box-shadow: var(--shadow);
+                    border: 2px solid transparent;
+                    transition: all 0.3s ease;
+                }
+
+                .empty-state:hover {
+                    border-color: var(--primary-color);
+                    box-shadow: var(--shadow-hover);
+                }
+
+                .pagination-btn {
+                    border-radius: 10px;
+                    transition: all 0.3s ease;
+                    font-weight: 500;
+                }
+
+                .pagination-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                }
+
+                .pagination-active {
+                    background: var(--gradient) !important;
+                    color: white !important;
+                }
+            `}</style>
+
+            {/* Floating particles */}
+            <div className="floating-particles">
+                {Array.from({ length: 15 }, (_, i) => (
+                    <div
+                        key={i}
+                        className="particle"
+                        style={{
+                            left: Math.random() * 100 + "%",
+                            width: Math.random() * 8 + 4 + "px",
+                            height: Math.random() * 8 + 4 + "px",
+                            animationDelay: Math.random() * 15 + "s",
+                            animationDuration: Math.random() * 10 + 10 + "s",
+                        }}
+                    />
+                ))}
+            </div>
+
+            <AuthenticatedLayout
+                header={
+                    <div className="header-gradient">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl backdrop-blur-sm">
+                                    <i className="fas fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold leading-tight">
+                                        💼 Minhas Vendas
+                                    </h2>
+                                    <p className="text-white/80 text-sm">
+                                        Gerencie suas vendas com elegância
+                                    </p>
+                                </div>
+                            </div>
+                            <Link href={route('sales.create')}>
+                                <button className="btn-gradient text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition duration-300">
+                                    <i className="fas fa-plus mr-2"></i>
+                                    Nova Venda
+                                </button>
+                            </Link>
+                        </div>
+                    </div>
+                }
+            >
+                <div className="sales-bg relative z-10">
+                    <div className="py-12">
+                        <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                            <div className="card-gradient overflow-hidden">
+                                <div className="p-8 text-gray-900">
+                                    {sales.data.length === 0 ? (
+                                        <div className="empty-state">
+                                            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-pink-100 to-yellow-100 rounded-full flex items-center justify-center">
+                                                <i className="fas fa-shopping-bag text-4xl text-pink-500"></i>
                                             </div>
-                                            <div className="flex space-x-2">
-                                                {sales.links.filter(link => link && link.url !== null).map((link, index) => (
-                                                    link.url ? (
-                                                        <Link
-                                                            key={index}
-                                                            href={link.url}
-                                                            className={`px-3 py-2 text-sm rounded-md ${
-                                                                link.active 
-                                                                    ? 'bg-indigo-600 text-white' 
-                                                                    : 'bg-white text-gray-500 hover:text-gray-700'
-                                                            }`}
-                                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                                        />
-                                                    ) : (
-                                                        <span
-                                                            key={index}
-                                                            className="px-3 py-2 text-sm rounded-md bg-gray-100 text-gray-400 cursor-not-allowed"
-                                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                                        />
-                                                    )
-                                                ))}
+                                            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                                                Nenhuma venda registrada ainda! 🌟
+                                            </h3>
+                                            <p className="text-lg text-gray-600 mb-8 max-w-md mx-auto">
+                                                Que tal começar sua jornada de sucesso registrando sua primeira venda? 
+                                                Cada grande vendedora começou com uma única venda! 💪
+                                            </p>
+                                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                                <Link href={route('sales.create')}>
+                                                    <button className="btn-gradient text-white px-10 py-4 rounded-full text-lg font-bold shadow-xl hover:shadow-2xl">
+                                                        <i className="fas fa-rocket mr-3"></i>
+                                                        Registrar Primeira Venda
+                                                    </button>
+                                                </Link>
+                                                <button className="bg-white/80 text-gray-700 hover:bg-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition duration-300 border border-gray-200">
+                                                    <i className="fas fa-question-circle mr-2"></i>
+                                                    Como Funciona?
+                                                </button>
                                             </div>
+                                        </div>
+                                    ) : (
+                                        <div className="overflow-x-auto">
+                                            <div className="mb-6 bg-gradient-to-r from-pink-50 to-yellow-50 border border-pink-200 rounded-xl p-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-yellow-400 rounded-full flex items-center justify-center">
+                                                        <i className="fas fa-chart-bar text-white"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-semibold text-gray-800">
+                                                            Total de {sales.data.length} vendas registradas
+                                                        </h3>
+                                                        <p className="text-sm text-gray-600">
+                                                            Continue assim! Cada venda te aproxima do sucesso! 🎯
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-transparent hover:border-pink-200 transition-all duration-300">
+                                                <table className="min-w-full">
+                                                    <thead className="table-header">
+                                                        <tr>
+                                                            <th className="px-6 py-4 text-left text-sm font-bold">
+                                                                <i className="fas fa-user mr-2"></i>
+                                                                Cliente
+                                                            </th>
+                                                            <th className="px-6 py-4 text-left text-sm font-bold">
+                                                                <i className="fas fa-money-bill-wave mr-2"></i>
+                                                                Valor Total
+                                                            </th>
+                                                            <th className="px-6 py-4 text-left text-sm font-bold">
+                                                                <i className="fas fa-hand-holding-usd mr-2"></i>
+                                                                Valor Recebido
+                                                            </th>
+                                                            <th className="px-6 py-4 text-left text-sm font-bold">
+                                                                <i className="fas fa-calendar-alt mr-2"></i>
+                                                                Data Pagamento
+                                                            </th>
+                                                            <th className="px-6 py-4 text-left text-sm font-bold">
+                                                                <i className="fas fa-flag mr-2"></i>
+                                                                Status
+                                                            </th>
+                                                            <th className="px-6 py-4 text-left text-sm font-bold">
+                                                                <i className="fas fa-cogs mr-2"></i>
+                                                                Ações
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="bg-white">
+                                                        {sales.data.map((sale, index) => (
+                                                            <tr key={sale.id} className={`table-row ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                                                                <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-yellow-400 rounded-full flex items-center justify-center text-white font-bold">
+                                                                            {sale.client_name.charAt(0).toUpperCase()}
+                                                                        </div>
+                                                                        {sale.client_name}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-sm font-bold text-green-600">
+                                                                    {formatCurrency(sale.total_amount)}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-sm font-bold text-blue-600">
+                                                                    {formatCurrency(sale.received_amount)}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-sm text-gray-600 font-medium">
+                                                                    📅 {formatDate(sale.payment_date)}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-sm">
+                                                                    {getStatusBadge(sale.status)}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-sm font-medium">
+                                                                    <div className="flex gap-2">
+                                                                        <Link 
+                                                                            href={route('sales.show', sale.id)}
+                                                                            className="action-btn action-btn-view"
+                                                                        >
+                                                                            <i className="fas fa-eye mr-1"></i>
+                                                                            Ver
+                                                                        </Link>
+                                                                        {sale.status === 'pendente' && (
+                                                                            <>
+                                                                                <Link 
+                                                                                    href={route('sales.edit', sale.id)}
+                                                                                    className="action-btn action-btn-edit"
+                                                                                >
+                                                                                    <i className="fas fa-edit mr-1"></i>
+                                                                                    Editar
+                                                                                </Link>
+                                                                                <button
+                                                                                    onClick={() => handleDeleteClick(sale)}
+                                                                                    className="action-btn action-btn-delete"
+                                                                                >
+                                                                                    <i className="fas fa-trash mr-1"></i>
+                                                                                    Excluir
+                                                                                </button>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            {/* Pagination */}
+                                            {sales.links && sales.links.length > 0 && (
+                                                <div className="mt-8 bg-white rounded-2xl p-6 shadow-lg">
+                                                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                                                        <div className="text-sm text-gray-700 font-medium bg-gray-50 px-4 py-2 rounded-full">
+                                                            📊 Mostrando {sales.from} a {sales.to} de {sales.total} resultados
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            {sales.links.filter(link => link && link.url !== null).map((link, index) => (
+                                                                link.url ? (
+                                                                    <Link
+                                                                        key={index}
+                                                                        href={link.url}
+                                                                        className={`pagination-btn px-4 py-2 text-sm ${
+                                                                            link.active 
+                                                                                ? 'pagination-active' 
+                                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        }`}
+                                                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                                                    />
+                                                                ) : (
+                                                                    <span
+                                                                        key={index}
+                                                                        className="pagination-btn px-4 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
+                                                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                                                    />
+                                                                )
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </AuthenticatedLayout>
 
             <DeleteConfirmationModal
                 show={showDeleteModal}
@@ -229,6 +516,12 @@ export default function Index({ sales }) {
                 message={saleToDelete ? `Tem certeza que deseja excluir a venda para ${saleToDelete.client_name}? Esta ação não pode ser desfeita.` : ''}
                 processing={processing}
             />
-        </AuthenticatedLayout>
+
+            {/* Font Awesome Icons */}
+            <link
+                rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+            />
+        </>
     );
 }

@@ -17,16 +17,29 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    if (auth()->user()->role === 'vendedora') {
-        $gamificationService = new \App\Services\GamificationService();
-        $gamificationData = $gamificationService->getGamificationData(auth()->user());
-        
-        return Inertia::render('Dashboard', [
-            'gamification' => $gamificationData
-        ]);
+    try {
+        if (auth()->user()->role === 'vendedora') {
+            // Temporarily disable gamification to test basic functionality
+            return Inertia::render('Dashboard', [
+                'gamification' => [
+                    'level' => [
+                        'level' => 1,
+                        'icon' => '🌟',
+                        'message' => 'Vendedora Iniciante - Pronta para brilhar!',
+                        'progress' => 25
+                    ],
+                    'motivationalQuote' => 'Cada venda é uma história de amor que você ajuda a criar. Continue brilhando!',
+                    'achievements' => [],
+                    'ranking' => [],
+                    'userPosition' => 1
+                ]
+            ]);
+        }
+        return Inertia::render('Dashboard');
+    } catch (\Exception $e) {
+        \Log::error('Dashboard Error: ' . $e->getMessage());
+        return Inertia::render('Dashboard');
     }
-    
-    return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
