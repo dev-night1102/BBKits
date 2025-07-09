@@ -1,4 +1,4 @@
-import{r as d,x,j as a}from"./app-BeFV6bcw.js";import"./TextInput-Dzrg7r9i.js";import{z as g}from"./transition-BO4nr4C_.js";function v({className:p=""}){const i=d.useRef(),l=d.useRef(),{data:t,setData:o,errors:s,put:m,reset:n,processing:c,recentlySuccessful:f}=x({current_password:"",password:"",password_confirmation:""}),u=e=>{e.preventDefault(),m(route("password.update"),{preserveScroll:!0,onSuccess:()=>n(),onError:r=>{r.password&&(n("password","password_confirmation"),i.current.focus()),r.current_password&&(n("current_password"),l.current.focus())}})};return a.jsxs(a.Fragment,{children:[a.jsx("style",{children:`
+import{J as x,x as g,j as e,t as u}from"./app-Bb6oJ2s4.js";import"./TextInput-D2E5rXH8.js";import{z as h}from"./transition-C7WWg7nb.js";function y({mustVerifyEmail:n,status:l,className:c=""}){const t=x().props.auth.user,{data:i,setData:s,patch:d,errors:r,processing:o,recentlySuccessful:m}=g({name:t.name,email:t.email}),p=a=>{a.preventDefault(),d(route("profile.update"))};return e.jsxs(e.Fragment,{children:[e.jsx("style",{children:`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
                 
                 :root {
@@ -12,17 +12,20 @@ import{r as d,x,j as a}from"./app-BeFV6bcw.js";import"./TextInput-Dzrg7r9i.js";i
                     --gradient: linear-gradient(135deg, #D4A574 0%, #E8B4CB 100%);
                     --gradient-soft: linear-gradient(135deg, #F5E6D3 0%, #FFFFFF 100%);
                     --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
+                    --gradient-warning: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+                    --gradient-info: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
                     --shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
                     --shadow-hover: 0 25px 50px rgba(0, 0, 0, 0.2);
                     --shadow-glow: 0 0 30px rgba(212, 165, 116, 0.3);
                     --shadow-success: 0 0 30px rgba(16, 185, 129, 0.3);
+                    --shadow-warning: 0 0 30px rgba(245, 158, 11, 0.3);
                 }
 
                 * {
                     font-family: 'Poppins', sans-serif;
                 }
 
-                .password-form-container {
+                .profile-form-container {
                     background: var(--gradient-soft);
                     border-radius: 25px;
                     box-shadow: var(--shadow);
@@ -33,7 +36,7 @@ import{r as d,x,j as a}from"./app-BeFV6bcw.js";import"./TextInput-Dzrg7r9i.js";i
                     overflow: hidden;
                 }
 
-                .password-form-container::before {
+                .profile-form-container::before {
                     content: '';
                     position: absolute;
                     top: 0;
@@ -50,7 +53,7 @@ import{r as d,x,j as a}from"./app-BeFV6bcw.js";import"./TextInput-Dzrg7r9i.js";i
                     100% { transform: translateY(-100px) rotate(360deg); }
                 }
 
-                .password-form-container:hover {
+                .profile-form-container:hover {
                     transform: translateY(-5px);
                     box-shadow: var(--shadow-hover);
                     border-color: var(--primary-color);
@@ -88,7 +91,6 @@ import{r as d,x,j as a}from"./app-BeFV6bcw.js";import"./TextInput-Dzrg7r9i.js";i
 
                 .input-group:nth-child(1) { animation-delay: 0.1s; }
                 .input-group:nth-child(2) { animation-delay: 0.2s; }
-                .input-group:nth-child(3) { animation-delay: 0.3s; }
 
                 @keyframes slideInLeft {
                     from {
@@ -200,6 +202,90 @@ import{r as d,x,j as a}from"./app-BeFV6bcw.js";import"./TextInput-Dzrg7r9i.js";i
                     }
                 }
 
+                .verification-card {
+                    background: var(--gradient-warning);
+                    border-radius: 20px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    color: white;
+                    box-shadow: var(--shadow-warning);
+                    animation: slideInRight 0.6s 0.3s ease-out;
+                    animation-fill-mode: backwards;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .verification-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+                    animation: shimmer 3s ease-in-out infinite;
+                }
+
+                @keyframes shimmer {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
+                }
+
+                @keyframes slideInRight {
+                    from {
+                        opacity: 0;
+                        transform: translateX(30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+
+                .verification-link {
+                    color: white;
+                    text-decoration: underline;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                    padding: 8px 16px;
+                    border-radius: 10px;
+                    background: rgba(255, 255, 255, 0.1);
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-top: 8px;
+                }
+
+                .verification-link:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                    transform: scale(1.05);
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                }
+
+                .verification-success {
+                    background: var(--gradient-info);
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 15px;
+                    font-weight: 600;
+                    margin-top: 12px;
+                    animation: successSlide 0.6s ease-out;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                @keyframes successSlide {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
                 .floating-particles {
                     position: absolute;
                     top: 0;
@@ -235,7 +321,7 @@ import{r as d,x,j as a}from"./app-BeFV6bcw.js";import"./TextInput-Dzrg7r9i.js";i
                     }
                 }
 
-                .security-icon {
+                .profile-icon {
                     background: var(--gradient);
                     animation: iconPulse 2s ease-in-out infinite;
                 }
@@ -260,4 +346,4 @@ import{r as d,x,j as a}from"./app-BeFV6bcw.js";import"./TextInput-Dzrg7r9i.js";i
                         transform: translateY(0);
                     }
                 }
-            `}),a.jsxs("section",{className:`${p} relative`,children:[a.jsx("div",{className:"floating-particles",children:Array.from({length:8},(e,r)=>a.jsx("div",{className:"particle",style:{left:Math.random()*100+"%",width:Math.random()*6+3+"px",height:Math.random()*6+3+"px",animationDelay:Math.random()*15+"s",animationDuration:Math.random()*10+10+"s"}},r))}),a.jsxs("div",{className:"password-form-container p-8 relative z-10",children:[a.jsxs("header",{className:"text-center mb-8",children:[a.jsx("div",{className:"w-16 h-16 security-icon mx-auto mb-4 rounded-full flex items-center justify-center shadow-lg",children:a.jsx("i",{className:"fas fa-shield-alt text-white text-2xl"})}),a.jsx("h2",{className:"text-3xl font-bold header-title mb-3",children:"Atualizar Senha"}),a.jsx("p",{className:"text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto",children:"Certifique-se de que sua conta está usando uma senha longa e aleatória para permanecer segura."})]}),a.jsxs("form",{onSubmit:u,className:"space-y-6",children:[a.jsxs("div",{className:"input-group",children:[a.jsxs("label",{className:"label-gradient",children:[a.jsx("i",{className:"fas fa-lock text-lg"}),"Senha Atual"]}),a.jsx("input",{id:"current_password",ref:l,value:t.current_password,onChange:e=>o("current_password",e.target.value),type:"password",className:"input-gradient w-full",autoComplete:"current-password",placeholder:"Digite sua senha atual"}),s.current_password&&a.jsxs("p",{className:"mt-2 text-red-500 font-medium flex items-center gap-2",children:[a.jsx("i",{className:"fas fa-exclamation-circle"}),s.current_password]})]}),a.jsxs("div",{className:"input-group",children:[a.jsxs("label",{className:"label-gradient",children:[a.jsx("i",{className:"fas fa-key text-lg"}),"Nova Senha"]}),a.jsx("input",{id:"password",ref:i,value:t.password,onChange:e=>o("password",e.target.value),type:"password",className:"input-gradient w-full",autoComplete:"new-password",placeholder:"Digite sua nova senha"}),s.password&&a.jsxs("p",{className:"mt-2 text-red-500 font-medium flex items-center gap-2",children:[a.jsx("i",{className:"fas fa-exclamation-circle"}),s.password]})]}),a.jsxs("div",{className:"input-group",children:[a.jsxs("label",{className:"label-gradient",children:[a.jsx("i",{className:"fas fa-check-double text-lg"}),"Confirmar Senha"]}),a.jsx("input",{id:"password_confirmation",value:t.password_confirmation,onChange:e=>o("password_confirmation",e.target.value),type:"password",className:"input-gradient w-full",autoComplete:"new-password",placeholder:"Confirme sua nova senha"}),s.password_confirmation&&a.jsxs("p",{className:"mt-2 text-red-500 font-medium flex items-center gap-2",children:[a.jsx("i",{className:"fas fa-exclamation-circle"}),s.password_confirmation]})]}),a.jsxs("div",{className:"form-actions flex items-center gap-6 justify-center",children:[a.jsx("button",{type:"submit",disabled:c,className:"btn-primary-gradient",children:c?a.jsxs(a.Fragment,{children:[a.jsx("i",{className:"fas fa-spinner fa-spin mr-2"}),"Salvando..."]}):a.jsxs(a.Fragment,{children:[a.jsx("i",{className:"fas fa-save mr-2"}),"Salvar Senha"]})}),a.jsx(g,{show:f,enter:"transition ease-in-out",enterFrom:"opacity-0",leave:"transition ease-in-out",leaveTo:"opacity-0",children:a.jsxs("div",{className:"success-message flex items-center gap-2",children:[a.jsx("i",{className:"fas fa-check-circle"}),"Senha atualizada com sucesso!"]})})]})]})]}),a.jsx("link",{rel:"stylesheet",href:"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"})]})]})}export{v as default};
+            `}),e.jsxs("section",{className:`${c} relative`,children:[e.jsx("div",{className:"floating-particles",children:Array.from({length:8},(a,f)=>e.jsx("div",{className:"particle",style:{left:Math.random()*100+"%",width:Math.random()*6+3+"px",height:Math.random()*6+3+"px",animationDelay:Math.random()*15+"s",animationDuration:Math.random()*10+10+"s"}},f))}),e.jsxs("div",{className:"profile-form-container p-8 relative z-10",children:[e.jsxs("header",{className:"text-center mb-8",children:[e.jsx("div",{className:"w-16 h-16 profile-icon mx-auto mb-4 rounded-full flex items-center justify-center shadow-lg",children:e.jsx("i",{className:"fas fa-user-edit text-white text-2xl"})}),e.jsx("h2",{className:"text-3xl font-bold header-title mb-3",children:"Informações do Perfil"}),e.jsx("p",{className:"text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto",children:"Atualize as informações do perfil da sua conta e endereço de e-mail."})]}),e.jsxs("form",{onSubmit:p,className:"space-y-6",children:[e.jsxs("div",{className:"input-group",children:[e.jsxs("label",{className:"label-gradient",children:[e.jsx("i",{className:"fas fa-user text-lg"}),"Nome"]}),e.jsx("input",{id:"name",className:"input-gradient w-full",value:i.name,onChange:a=>s("name",a.target.value),required:!0,autoFocus:!0,autoComplete:"name",placeholder:"Digite seu nome completo"}),r.name&&e.jsxs("p",{className:"mt-2 text-red-500 font-medium flex items-center gap-2",children:[e.jsx("i",{className:"fas fa-exclamation-circle"}),r.name]})]}),e.jsxs("div",{className:"input-group",children:[e.jsxs("label",{className:"label-gradient",children:[e.jsx("i",{className:"fas fa-envelope text-lg"}),"E-mail"]}),e.jsx("input",{id:"email",type:"email",className:"input-gradient w-full",value:i.email,onChange:a=>s("email",a.target.value),required:!0,autoComplete:"username",placeholder:"Digite seu endereço de e-mail"}),r.email&&e.jsxs("p",{className:"mt-2 text-red-500 font-medium flex items-center gap-2",children:[e.jsx("i",{className:"fas fa-exclamation-circle"}),r.email]})]}),n&&t.email_verified_at===null&&e.jsxs("div",{className:"verification-card relative z-10",children:[e.jsxs("div",{className:"flex items-center gap-3 mb-3",children:[e.jsx("i",{className:"fas fa-exclamation-triangle text-2xl"}),e.jsx("h3",{className:"font-bold text-lg",children:"E-mail não verificado"})]}),e.jsx("p",{className:"mb-4",children:"Seu endereço de e-mail não foi verificado. Para ter acesso completo ao sistema, você precisa verificar seu e-mail."}),e.jsxs(u,{href:route("verification.send"),method:"post",as:"button",className:"verification-link",children:[e.jsx("i",{className:"fas fa-paper-plane"}),"Reenviar e-mail de verificação"]}),l==="verification-link-sent"&&e.jsxs("div",{className:"verification-success",children:[e.jsx("i",{className:"fas fa-check-circle"}),"Um novo link de verificação foi enviado para seu e-mail!"]})]}),e.jsxs("div",{className:"form-actions flex items-center gap-6 justify-center",children:[e.jsx("button",{type:"submit",disabled:o,className:"btn-primary-gradient",children:o?e.jsxs(e.Fragment,{children:[e.jsx("i",{className:"fas fa-spinner fa-spin mr-2"}),"Salvando..."]}):e.jsxs(e.Fragment,{children:[e.jsx("i",{className:"fas fa-save mr-2"}),"Salvar Perfil"]})}),e.jsx(h,{show:m,enter:"transition ease-in-out",enterFrom:"opacity-0",leave:"transition ease-in-out",leaveTo:"opacity-0",children:e.jsxs("div",{className:"success-message flex items-center gap-2",children:[e.jsx("i",{className:"fas fa-check-circle"}),"Perfil atualizado com sucesso!"]})})]})]})]}),e.jsx("link",{rel:"stylesheet",href:"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"})]})]})}export{y as default};

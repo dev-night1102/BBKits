@@ -1,4 +1,4 @@
-import{j as e,Q as r}from"./app-BeFV6bcw.js";import{A as s}from"./AuthenticatedLayout-B5uWgDJv.js";import o from"./DeleteUserForm-Do5WEFKC.js";import n from"./UpdatePasswordForm-CCZbD--Q.js";import l from"./UpdateProfileInformationForm-qZ0RjbzP.js";import"./transition-BO4nr4C_.js";import"./dialog-DfAP2BmH.js";import"./TextInput-Dzrg7r9i.js";function b({mustVerifyEmail:t,status:a}){return e.jsxs(e.Fragment,{children:[e.jsx(r,{title:"Meu Perfil - BBKits"}),e.jsx("style",{children:`
+import{j as e,Q as r}from"./app-Bb6oJ2s4.js";import{A as s}from"./AuthenticatedLayout-t0uJTjr-.js";import o from"./DeleteUserForm-w3g-V9HV.js";import n from"./UpdatePasswordForm-VfbGgdib.js";import l from"./UpdateProfileInformationForm-Dv8NAgew.js";import"./transition-C7WWg7nb.js";import"./dialog-Cn0PahJ6.js";import"./TextInput-D2E5rXH8.js";function b({mustVerifyEmail:t,status:a}){return e.jsxs(e.Fragment,{children:[e.jsx(r,{title:"Meu Perfil - BBKits"}),e.jsx("style",{children:`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
                 
                 :root {

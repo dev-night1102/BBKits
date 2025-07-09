@@ -1,4 +1,4 @@
-import{j as e,Q as s,t}from"./app-BeFV6bcw.js";function n({auth:a}){return e.jsxs(e.Fragment,{children:[e.jsx(s,{title:"BBKits - Sistema de Vendas"}),e.jsx("style",{children:`
+import{j as e,Q as s,t}from"./app-Bb6oJ2s4.js";function n({auth:a}){return e.jsxs(e.Fragment,{children:[e.jsx(s,{title:"BBKits - Sistema de Vendas"}),e.jsx("style",{children:`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
                 
                 :root {
