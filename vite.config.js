@@ -20,4 +20,14 @@ export default defineConfig({
             plugins: [tailwindcss(), autoprefixer()],
         },
     },
+    build: {
+        manifest: true,
+        outDir: 'public/build',
+        rollupOptions: {
+            input: {
+                app: 'resources/js/app.jsx',
+                css: 'resources/css/app.css'
+            }
+        }
+    }
 });
