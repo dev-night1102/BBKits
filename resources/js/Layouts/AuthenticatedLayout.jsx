@@ -391,9 +391,11 @@ export default function AuthenticatedLayout({ header, children }) {
                             <div className="flex items-center">
                                 <div className="flex shrink-0 items-center">
                                     <Link href="/" className="logo-container">
-                                        <div className="relative">
-                                            <ApplicationLogo className="block h-9 w-auto text-2xl font-bold text-transparent bg-gradient-to-r from-amber-600 via-pink-500 to-purple-600 bg-clip-text" />
-                                        </div>
+                                        <img
+                    src="/images/logo.webp"
+                    alt="BBKits Logo"
+                    className="object-contain drop-shadow-xl hover:drop-shadow-2xl transition-all duration-500 hover:scale-110 hover:rotate-3 filter hover:brightness-110 hover:saturate-125 cursor-pointer animate-pulse hover:animate-none rounded-xl bg-white from-white/20 to-transparent backdrop-blur-sm border border-white/30 p-1 shadow-xl hover:shadow-yellow-400/50"
+                />
                                     </Link>
                                 </div>
 
