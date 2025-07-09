@@ -14,9 +14,17 @@ export default defineConfig({
         react(),
     ],
     build: {
-        outDir: "public/build",
-        manifest: true,
+    outDir: "public/build",
+    emptyOutDir: true,
+    manifest: true,
+    rollupOptions: {
+      output: {
+        entryFileNames: "assets/[name]-[hash].js",
+        chunkFileNames: "assets/[name]-[hash].js",
+        assetFileNames: "assets/[name]-[hash][extname]",
+      },
     },
+  },
     css: {
         postcss: {
             plugins: [tailwindcss(), autoprefixer()],
