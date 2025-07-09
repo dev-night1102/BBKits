@@ -6,6 +6,7 @@
 
     <title inertia>{{ config('app.name', 'BBKits') }}</title>
 
+    {{-- Favicon --}}
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/png">
 
     {{-- Fonts --}}
@@ -15,10 +16,12 @@
     {{-- Laravel routes --}}
     @routes
 
-    {{-- Vite React Refresh (dev only) --}}
-    @viteReactRefresh
+    {{-- React Refresh for local only --}}
+    @env('local')
+        @viteReactRefresh
+    @endenv
 
-    {{-- Vite Assets (dev + production) --}}
+    {{-- Vite Assets (works in local + production) --}}
     @vite(['resources/js/app.jsx', 'resources/css/app.css'])
 
     {{-- Inertia Head --}}
