@@ -1,14 +1,15 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
-import Dropdown from '@/Components/Dropdown';
-import NavLink from '@/Components/NavLink';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
-import NotificationBell from '@/Components/NotificationBell';
-import { Link, usePage } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import ApplicationLogo from "@/Components/ApplicationLogo";
+import Dropdown from "@/Components/Dropdown";
+import NavLink from "@/Components/NavLink";
+import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
+import NotificationBell from "@/Components/NotificationBell";
+import { Link, usePage } from "@inertiajs/react";
+import { useState, useEffect } from "react";
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
-    const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
+    const [showingNavigationDropdown, setShowingNavigationDropdown] =
+        useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
@@ -16,8 +17,8 @@ export default function AuthenticatedLayout({ header, children }) {
             setIsScrolled(window.scrollY > 50);
         };
 
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
     return (
@@ -379,69 +380,141 @@ export default function AuthenticatedLayout({ header, children }) {
                                 width: Math.random() * 10 + 4 + "px",
                                 height: Math.random() * 10 + 4 + "px",
                                 animationDelay: Math.random() * 15 + "s",
-                                animationDuration: Math.random() * 10 + 15 + "s",
+                                animationDuration:
+                                    Math.random() * 10 + 15 + "s",
                             }}
                         />
                     ))}
                 </div>
 
-                <nav className={`fixed top-0 w-full z-50 navbar-glass ${isScrolled ? 'navbar-scrolled' : ''}`}>
+                <nav
+                    className={`fixed top-0 w-full z-50 navbar-glass ${
+                        isScrolled ? "navbar-scrolled" : ""
+                    }`}
+                >
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="flex h-16 justify-between items-center">
                             <div className="flex items-center">
                                 <div className="flex shrink-0 items-center">
                                     <Link href="/" className="logo-container">
                                         <img
-                    src="/images/logo.webp"
-                    alt="BBKits Logo"
-                    className="object-contain drop-shadow-xl hover:drop-shadow-2xl transition-all duration-500 hover:scale-110 hover:rotate-3 filter hover:brightness-110 hover:saturate-125 cursor-pointer animate-pulse hover:animate-none rounded-xl bg-white from-white/20 to-transparent backdrop-blur-sm border border-white/30 p-1 shadow-xl hover:shadow-yellow-400/50"
-                />
+                                            src="/images/logo.webp"
+                                            alt="BBKits Logo"
+                                            className="object-contain drop-shadow-xl hover:drop-shadow-2xl transition-all duration-500 hover:scale-110 hover:rotate-3 filter hover:brightness-110 hover:saturate-125 cursor-pointer animate-pulse hover:animate-none rounded-xl bg-white from-white/20 to-transparent backdrop-blur-sm border border-white/30 p-1 shadow-xl hover:shadow-yellow-400/50"
+                                        />
                                     </Link>
                                 </div>
 
                                 <div className="hidden space-x-2 sm:-my-px sm:ms-10 sm:flex">
                                     <NavLink
-                                        href={route('dashboard')}
-                                        active={route().current('dashboard')}
-                                        className={`nav-link flex items-center gap-2 ${route().current('dashboard') ? 'active' : ''}`}
+                                        href={route("dashboard")}
+                                        active={route().current("dashboard")}
+                                        className={`nav-link flex items-center gap-2 ${
+                                            route().current("dashboard")
+                                                ? "active"
+                                                : ""
+                                        }`}
                                     >
-                                        <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                                        <svg
+                                            className="w-4 h-4 icon-hover"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+                                            />
                                         </svg>
                                         Dashboard
                                     </NavLink>
 
                                     <NavLink
-                                        href={route('sales.index')}
-                                        active={route().current('sales.*')}
-                                        className={`nav-link flex items-center gap-2 ${route().current('sales.*') ? 'active' : ''}`}
+                                        href={route("sales.index")}
+                                        active={route().current("sales.*")}
+                                        className={`nav-link flex items-center gap-2 ${
+                                            route().current("sales.*")
+                                                ? "active"
+                                                : ""
+                                        }`}
                                     >
-                                        <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                        <svg
+                                            className="w-4 h-4 icon-hover"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                                            />
                                         </svg>
                                         💼 Vendas
                                     </NavLink>
 
-                                    {(user.role === 'admin' || user.role === 'financeiro') && (
+                                    {(user.role === "admin" ||
+                                        user.role === "financeiro") && (
                                         <>
                                             <NavLink
-                                                href={route('admin.dashboard')}
-                                                active={route().current('admin.dashboard')}
-                                                className={`nav-link flex items-center gap-2 ${route().current('admin.dashboard') ? 'active' : ''}`}
+                                                href={route("admin.dashboard")}
+                                                active={route().current(
+                                                    "admin.dashboard"
+                                                )}
+                                                className={`nav-link flex items-center gap-2 ${
+                                                    route().current(
+                                                        "admin.dashboard"
+                                                    )
+                                                        ? "active"
+                                                        : ""
+                                                }`}
                                             >
-                                                <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                <svg
+                                                    className="w-4 h-4 icon-hover"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                                                    />
                                                 </svg>
                                                 🛡️ Admin
                                             </NavLink>
 
                                             <NavLink
-                                                href={route('admin.sales.index')}
-                                                active={route().current('admin.sales.*')}
-                                                className={`nav-link flex items-center gap-2 ${route().current('admin.sales.*') ? 'active' : ''}`}
+                                                href={route(
+                                                    "admin.sales.index"
+                                                )}
+                                                active={route().current(
+                                                    "admin.sales.*"
+                                                )}
+                                                className={`nav-link flex items-center gap-2 ${
+                                                    route().current(
+                                                        "admin.sales.*"
+                                                    )
+                                                        ? "active"
+                                                        : ""
+                                                }`}
                                             >
-                                                <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                                <svg
+                                                    className="w-4 h-4 icon-hover"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                                    />
                                                 </svg>
                                                 💰 Financeiro
                                             </NavLink>
@@ -456,16 +529,29 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <Dropdown>
                                         <Dropdown.Trigger>
                                             <span className="inline-flex rounded-md">
-                                                <button type="button" className="user-dropdown">
+                                                <button
+                                                    type="button"
+                                                    className="user-dropdown"
+                                                >
                                                     <div className="flex items-center gap-3">
                                                         <div className="user-avatar w-8 h-8 text-xs">
-                                                            {user.name.charAt(0).toUpperCase()}
+                                                            {user.name
+                                                                .charAt(0)
+                                                                .toUpperCase()}
                                                         </div>
                                                         <span className="hidden md:block font-semibold text-gray-700">
                                                             {user.name}
                                                         </span>
-                                                        <svg className="-me-0.5 ms-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-180" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                        <svg
+                                                            className="-me-0.5 ms-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-180"
+                                                            fill="currentColor"
+                                                            viewBox="0 0 20 20"
+                                                        >
+                                                            <path
+                                                                fillRule="evenodd"
+                                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                                clipRule="evenodd"
+                                                            />
                                                         </svg>
                                                     </div>
                                                 </button>
@@ -476,34 +562,67 @@ export default function AuthenticatedLayout({ header, children }) {
                                             <div className="dropdown-header">
                                                 <div className="flex items-center gap-3">
                                                     <div className="user-avatar w-12 h-12 text-sm">
-                                                        {user.name.charAt(0).toUpperCase()}
+                                                        {user.name
+                                                            .charAt(0)
+                                                            .toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-gray-800">{user.name}</div>
-                                                        <div className="text-sm text-gray-600">{user.email}</div>
+                                                        <div className="font-bold text-gray-800">
+                                                            {user.name}
+                                                        </div>
+                                                        <div className="text-sm text-gray-600">
+                                                            {user.email}
+                                                        </div>
                                                         <div className="text-xs text-purple-600 font-medium mt-1">
-                                                            ✨ {user.role === 'vendedora' ? 'Vendedora BBKits' : user.role === 'admin' ? 'Administrador' : 'Financeiro'}
+                                                            ✨{" "}
+                                                            {user.role ===
+                                                            "vendedora"
+                                                                ? "Vendedora BBKits"
+                                                                : user.role ===
+                                                                  "admin"
+                                                                ? "Administrador"
+                                                                : "Financeiro"}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                             <Dropdown.Link
-                                                href={route('profile.edit')}
+                                                href={route("profile.edit")}
                                                 className="dropdown-link flex items-center gap-3"
                                             >
-                                                <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                <svg
+                                                    className="w-4 h-4 icon-hover"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                                    />
                                                 </svg>
                                                 👤 Meu Perfil
                                             </Dropdown.Link>
                                             <Dropdown.Link
-                                                href={route('logout')}
+                                                href={route("logout")}
                                                 method="post"
                                                 as="button"
                                                 className="dropdown-link flex items-center gap-3 text-red-600 hover:text-red-700 hover:bg-red-50 w-full text-left"
                                             >
-                                                <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                <svg
+                                                    className="w-4 h-4 icon-hover"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                                    />
                                                 </svg>
                                                 🚪 Sair
                                             </Dropdown.Link>
@@ -514,18 +633,54 @@ export default function AuthenticatedLayout({ header, children }) {
 
                             <div className="-me-2 flex items-center sm:hidden">
                                 <button
-                                    onClick={() => setShowingNavigationDropdown(!showingNavigationDropdown)}
+                                    onClick={() =>
+                                        setShowingNavigationDropdown(
+                                            !showingNavigationDropdown
+                                        )
+                                    }
                                     className="mobile-toggle"
                                 >
                                     <div className="relative w-6 h-6">
-                                        <div className={`absolute inset-0 transition-all duration-300 ${showingNavigationDropdown ? 'opacity-0 rotate-45' : 'opacity-100 rotate-0'}`}>
-                                            <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                                        <div
+                                            className={`absolute inset-0 transition-all duration-300 ${
+                                                showingNavigationDropdown
+                                                    ? "opacity-0 rotate-45"
+                                                    : "opacity-100 rotate-0"
+                                            }`}
+                                        >
+                                            <svg
+                                                className="h-6 w-6"
+                                                stroke="currentColor"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth="2"
+                                                    d="M4 6h16M4 12h16M4 18h16"
+                                                />
                                             </svg>
                                         </div>
-                                        <div className={`absolute inset-0 transition-all duration-300 ${showingNavigationDropdown ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-45'}`}>
-                                            <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                        <div
+                                            className={`absolute inset-0 transition-all duration-300 ${
+                                                showingNavigationDropdown
+                                                    ? "opacity-100 rotate-0"
+                                                    : "opacity-0 -rotate-45"
+                                            }`}
+                                        >
+                                            <svg
+                                                className="h-6 w-6"
+                                                stroke="currentColor"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth="2"
+                                                    d="M6 18L18 6M6 6l12 12"
+                                                />
                                             </svg>
                                         </div>
                                     </div>
@@ -534,54 +689,101 @@ export default function AuthenticatedLayout({ header, children }) {
                         </div>
                     </div>
 
-                    <div className={`sm:hidden mobile-menu transition-all duration-500 ease-in-out overflow-hidden ${
-                        showingNavigationDropdown 
-                            ? 'max-h-screen opacity-100' 
-                            : 'max-h-0 opacity-0'
-                    }`}>
+                    <div
+                        className={`sm:hidden mobile-menu transition-all duration-500 ease-in-out overflow-hidden ${
+                            showingNavigationDropdown
+                                ? "max-h-screen opacity-100"
+                                : "max-h-0 opacity-0"
+                        }`}
+                    >
                         <div className="space-y-2 pb-4 pt-4 px-4">
                             <ResponsiveNavLink
-                                href={route('dashboard')}
-                                active={route().current('dashboard')}
+                                href={route("dashboard")}
+                                active={route().current("dashboard")}
                                 className="mobile-nav-item flex items-center gap-3 px-4 py-3 rounded-xl"
                             >
-                                <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                                <svg
+                                    className="w-4 h-4 icon-hover"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+                                    />
                                 </svg>
                                 📊 Dashboard
                             </ResponsiveNavLink>
 
                             <ResponsiveNavLink
-                                href={route('sales.index')}
-                                active={route().current('sales.*')}
+                                href={route("sales.index")}
+                                active={route().current("sales.*")}
                                 className="mobile-nav-item flex items-center gap-3 px-4 py-3 rounded-xl"
                             >
-                                <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                <svg
+                                    className="w-4 h-4 icon-hover"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                                    />
                                 </svg>
                                 💼 Minhas Vendas
                             </ResponsiveNavLink>
 
-                            {(user.role === 'admin' || user.role === 'financeiro') && (
+                            {(user.role === "admin" ||
+                                user.role === "financeiro") && (
                                 <>
                                     <ResponsiveNavLink
-                                        href={route('admin.dashboard')}
-                                        active={route().current('admin.dashboard')}
+                                        href={route("admin.dashboard")}
+                                        active={route().current(
+                                            "admin.dashboard"
+                                        )}
                                         className="mobile-nav-item flex items-center gap-3 px-4 py-3 rounded-xl"
                                     >
-                                        <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                        <svg
+                                            className="w-4 h-4 icon-hover"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                                            />
                                         </svg>
                                         🛡️ Admin Dashboard
                                     </ResponsiveNavLink>
 
                                     <ResponsiveNavLink
-                                        href={route('admin.sales.index')}
-                                        active={route().current('admin.sales.*')}
+                                        href={route("admin.sales.index")}
+                                        active={route().current(
+                                            "admin.sales.*"
+                                        )}
                                         className="mobile-nav-item flex items-center gap-3 px-4 py-3 rounded-xl"
                                     >
-                                        <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        <svg
+                                            className="w-4 h-4 icon-hover"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                            />
                                         </svg>
                                         💰 Painel Financeiro
                                     </ResponsiveNavLink>
@@ -596,33 +798,62 @@ export default function AuthenticatedLayout({ header, children }) {
                                         {user.name.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
-                                        <div className="text-base font-bold text-gray-800">{user.name}</div>
-                                        <div className="text-sm text-gray-600">{user.email}</div>
+                                        <div className="text-base font-bold text-gray-800">
+                                            {user.name}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                            {user.email}
+                                        </div>
                                         <div className="text-xs text-purple-600 font-medium mt-1">
-                                            ✨ {user.role === 'vendedora' ? 'Vendedora BBKits' : user.role === 'admin' ? 'Administrador' : 'Financeiro'}
+                                            ✨{" "}
+                                            {user.role === "vendedora"
+                                                ? "Vendedora BBKits"
+                                                : user.role === "admin"
+                                                ? "Administrador"
+                                                : "Financeiro"}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <ResponsiveNavLink 
-                                    href={route('profile.edit')}
+                                <ResponsiveNavLink
+                                    href={route("profile.edit")}
                                     className="mobile-nav-item flex items-center gap-3 px-4 py-3 rounded-xl"
                                 >
-                                    <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    <svg
+                                        className="w-4 h-4 icon-hover"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                        />
                                     </svg>
                                     👤 Meu Perfil
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink
                                     method="post"
-                                    href={route('logout')}
+                                    href={route("logout")}
                                     as="button"
                                     className="mobile-nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 w-full text-left"
                                 >
-                                    <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    <svg
+                                        className="w-4 h-4 icon-hover"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                        />
                                     </svg>
                                     🚪 Sair
                                 </ResponsiveNavLink>
@@ -634,9 +865,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 {header && (
                     <header className="header-section mt-16 border-b border-pink-100/50 relative z-10">
                         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 relative z-10">
-                            <div className="animate-fadeInUp">
-                                {header}
-                            </div>
+                            <div className="animate-fadeInUp">{header}</div>
                         </div>
                     </header>
                 )}
