@@ -83,7 +83,7 @@ class AdminController extends Controller
                         ->whereMonth('payment_date', Carbon::now()->month);
                 }
             ], 'received_amount')
-            ->having('sales_count', '>', 0)
+            // ->having('sales_count', '>', 0)
             ->orderBy('total_revenue', 'desc')
             ->limit(5)
             ->get()
