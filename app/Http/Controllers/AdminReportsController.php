@@ -152,8 +152,16 @@ class AdminReportsController extends Controller
             ->whereHas('sales', function ($query) use ($month, $year) {
                 $query->where('status', 'aprovado')
                     ->whereYear('payment_date', $year)
+                    ->whereMonth('payment_date', $month);
+            })
+            ->get()
+            ->filter(function ($user) use ($month, $year) {
+                $totalBase = Sale::where('user_id', $user->id)
+                    ->where('status', 'aprovado')
+                    ->whereYear('payment_date', $year)
                     ->whereMonth('payment_date', $month)
-                    ->havingRaw('SUM(received_amount - shipping_amount) >= 40000');
+                    ->sum(DB::raw('received_amount - shipping_amount'));
+                return $totalBase >= 40000;
             })
             ->count();
 
@@ -193,10 +201,11 @@ class AdminReportsController extends Controller
         $commissionBase = $sale->received_amount - $sale->shipping_amount;
         
         // Get seller's monthly total for commission calculation
+        $paymentDate = Carbon::parse($sale->payment_date);
         $sellerMonthlyTotal = Sale::where('user_id', $sale->user_id)
             ->where('status', 'aprovado')
-            ->whereYear('payment_date', $sale->payment_date->year)
-            ->whereMonth('payment_date', $sale->payment_date->month)
+            ->whereYear('payment_date', $paymentDate->year)
+            ->whereMonth('payment_date', $paymentDate->month)
             ->sum(DB::raw('received_amount - shipping_amount'));
         
         // Commission tiers based on monthly total
