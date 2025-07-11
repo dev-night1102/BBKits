@@ -1,8 +1,48 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useEffect, useState } from 'react';
 
 export default function Dashboard({ stats, topPerformers, recentSales, monthlyData }) {
     const { auth } = usePage().props;
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+    const [refreshInterval, setRefreshInterval] = useState(30); // seconds
+
+    const handleManualRefresh = () => {
+        setIsRefreshing(true);
+        router.reload({
+            only: ['stats', 'topPerformers', 'recentSales', 'monthlyData'],
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                setIsRefreshing(false);
+            },
+            onError: () => {
+                setIsRefreshing(false);
+            }
+        });
+    };
+
+    useEffect(() => {
+        if (!autoRefreshEnabled) return;
+
+        const interval = setInterval(() => {
+            setIsRefreshing(true);
+            router.reload({
+                only: ['stats', 'topPerformers', 'recentSales', 'monthlyData'],
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    setIsRefreshing(false);
+                },
+                onError: () => {
+                    setIsRefreshing(false);
+                }
+            });
+        }, refreshInterval * 1000);
+
+        return () => clearInterval(interval);
+    }, [autoRefreshEnabled, refreshInterval]);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('pt-BR', {
@@ -260,8 +300,46 @@ export default function Dashboard({ stats, topPerformers, recentSales, monthlyDa
                         <h2 className="text-2xl font-bold logo-glow">
                             Dashboard Administrativo - BBKits ✨
                         </h2>
-                        <div className="text-sm text-gray-600 bg-gradient-to-r from-pink-100 to-purple-100 px-4 py-2 rounded-full shadow-md">
-                            Bem-vindo, <span className="font-semibold text-pink-600">{auth.user.name}</span>! 👋
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-full shadow-md">
+                                <label className="flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={autoRefreshEnabled}
+                                        onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+                                        className="sr-only"
+                                    />
+                                    <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                        autoRefreshEnabled ? 'bg-green-500' : 'bg-gray-300'
+                                    }`}>
+                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                            autoRefreshEnabled ? 'translate-x-6' : 'translate-x-1'
+                                        }`} />
+                                    </div>
+                                    <span className="ml-2 text-sm font-medium text-gray-700">
+                                        Auto-refresh {autoRefreshEnabled && `(${refreshInterval}s)`}
+                                    </span>
+                                </label>
+                                {isRefreshing && (
+                                    <svg className="animate-spin h-4 w-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                )}
+                                <button
+                                    onClick={handleManualRefresh}
+                                    disabled={isRefreshing}
+                                    className="ml-2 p-2 text-gray-600 hover:text-green-600 transition-colors disabled:opacity-50"
+                                    title="Atualizar agora"
+                                >
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="text-sm text-gray-600 bg-gradient-to-r from-pink-100 to-purple-100 px-4 py-2 rounded-full shadow-md">
+                                Bem-vindo, <span className="font-semibold text-pink-600">{auth.user.name}</span>! 👋
+                            </div>
                         </div>
                     </div>
                 }

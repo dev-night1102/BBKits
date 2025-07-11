@@ -1,4 +1,4 @@
-import{J as i,j as e,Q as l}from"./app-l0-wBPpP.js";import{A as n}from"./AuthenticatedLayout-KEwTq39a.js";import"./transition-ChPHMSKG.js";function x(){const{auth:t,gamification:a}=i().props;return e.jsxs(e.Fragment,{children:[e.jsx("style",{children:`
+import{J as i,j as e,Q as l}from"./app-cO170d2j.js";import{A as n}from"./AuthenticatedLayout-72bgQbl2.js";import"./transition-C2sSSXsb.js";function x(){const{auth:t,gamification:a}=i().props;return e.jsxs(e.Fragment,{children:[e.jsx("style",{children:`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
                 
                 :root {
