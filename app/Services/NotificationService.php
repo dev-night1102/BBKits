@@ -38,10 +38,12 @@ class NotificationService
         $admins = User::whereIn('role', ['admin', 'financeiro'])->get();
         
         foreach ($admins as $admin) {
+            $vendedoraName = $sale->vendedora?->name ?? 'usuário desconhecido';
+
             $this->createNotification(
                 $admin->id,
                 'new_sale',
-                "Nova venda registrada por {$sale->vendedora->name} 📋",
+                "Nova venda registrada por {$vendedoraName} 📋",
                 ['sale_id' => $sale->id]
             );
         }
