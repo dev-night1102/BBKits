@@ -5,17 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Services\PDFReportService;
 use App\Services\NotificationService;
+use App\Services\CommissionService;
+use App\Jobs\ProcessSaleApproval;
 
 class SaleController extends Controller
 {
     protected $notificationService;
+    protected $commissionService;
 
-    public function __construct(NotificationService $notificationService)
+    public function __construct(NotificationService $notificationService, CommissionService $commissionService)
     {
         $this->notificationService = $notificationService;
+        $this->commissionService = $commissionService;
     }
 
     public function index()
@@ -142,15 +148,46 @@ class SaleController extends Controller
             abort(403, 'Unauthorized');
         }
         
-        $sale->update([
-            'status' => 'aprovado',
-            'approved_by' => auth()->id(),
-            'approved_at' => now()
-        ]);
-        
-        $this->notificationService->notifySaleApproved($sale);
-        
-        return back()->with('message', 'Venda aprovada com sucesso!');
+        try {
+            DB::beginTransaction();
+            
+            // Verify sale is still pending
+            if ($sale->status !== 'pendente') {
+                throw new \Exception('Sale is no longer pending approval');
+            }
+            
+            $sale->update([
+                'status' => 'aprovado',
+                'approved_by' => auth()->id(),
+                'approved_at' => now()
+            ]);
+            
+            // Create commission record
+            $commission = $this->commissionService->createCommissionForSale($sale->fresh());
+            
+            DB::commit();
+            
+            Log::info('Sale approved successfully', [
+                'sale_id' => $sale->id,
+                'approved_by' => auth()->id(),
+                'commission_created' => $commission ? $commission->id : null
+            ]);
+            
+            $this->notificationService->notifySaleApproved($sale);
+            
+            return back()->with('message', 'Venda aprovada com sucesso!');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to approve sale', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id()
+            ]);
+            
+            return back()->withErrors(['error' => 'Erro ao aprovar venda. Tente novamente.']);
+        }
     }
     
     public function reject(Request $request, Sale $sale)
@@ -159,20 +196,114 @@ class SaleController extends Controller
             abort(403, 'Unauthorized');
         }
         
-        $validated = $request->validate([
-            'rejection_reason' => 'required|string|max:500'
-        ]);
+        try {
+            $validated = $request->validate([
+                'rejection_reason' => 'required|string|max:500'
+            ]);
+            
+            DB::beginTransaction();
+            
+            // Verify sale is still pending
+            if ($sale->status !== 'pendente') {
+                throw new \Exception('Sale is no longer pending approval');
+            }
+            
+            $sale->update([
+                'status' => 'recusado',
+                'rejected_by' => auth()->id(),
+                'rejected_at' => now(),
+                'rejection_reason' => $validated['rejection_reason']
+            ]);
+            
+            DB::commit();
+            
+            Log::info('Sale rejected', [
+                'sale_id' => $sale->id,
+                'rejected_by' => auth()->id(),
+                'reason' => $validated['rejection_reason']
+            ]);
+            
+            $this->notificationService->notifySaleRejected($sale, $validated['rejection_reason']);
+            
+            return back()->with('message', 'Venda recusada.');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to reject sale', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id()
+            ]);
+            
+            return back()->withErrors(['error' => 'Erro ao recusar venda. Tente novamente.']);
+        }
+    }
+    
+    // Queued payment processing methods with fallback
+    public function approveWithQueue(Sale $sale)
+    {
+        if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'financeiro') {
+            abort(403, 'Unauthorized');
+        }
         
-        $sale->update([
-            'status' => 'recusado',
-            'rejected_by' => auth()->id(),
-            'rejected_at' => now(),
-            'rejection_reason' => $validated['rejection_reason']
-        ]);
+        try {
+            // Try to dispatch to queue first
+            ProcessSaleApproval::dispatch($sale->id, auth()->id(), 'approve');
+            
+            Log::info('Sale approval queued', [
+                'sale_id' => $sale->id,
+                'approved_by' => auth()->id()
+            ]);
+            
+            return back()->with('message', 'Venda está sendo processada para aprovação...');
+            
+        } catch (\Exception $e) {
+            Log::warning('Queue failed, falling back to synchronous processing', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            // Fallback to synchronous processing
+            return $this->approve($sale);
+        }
+    }
+    
+    public function rejectWithQueue(Request $request, Sale $sale)
+    {
+        if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'financeiro') {
+            abort(403, 'Unauthorized');
+        }
         
-        $this->notificationService->notifySaleRejected($sale, $validated['rejection_reason']);
-        
-        return back()->with('message', 'Venda recusada.');
+        try {
+            $validated = $request->validate([
+                'rejection_reason' => 'required|string|max:500'
+            ]);
+            
+            // Try to dispatch to queue first
+            ProcessSaleApproval::dispatch(
+                $sale->id, 
+                auth()->id(), 
+                'reject', 
+                $validated['rejection_reason']
+            );
+            
+            Log::info('Sale rejection queued', [
+                'sale_id' => $sale->id,
+                'rejected_by' => auth()->id()
+            ]);
+            
+            return back()->with('message', 'Venda está sendo processada para recusa...');
+            
+        } catch (\Exception $e) {
+            Log::warning('Queue failed, falling back to synchronous processing', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            // Fallback to synchronous processing
+            return $this->reject($request, $sale);
+        }
     }
     
     // PDF Report methods
