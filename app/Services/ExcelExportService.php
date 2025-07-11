@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Sale;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ExcelExportService
 {
@@ -13,10 +14,10 @@ class ExcelExportService
         $month = $month ?: Carbon::now()->month;
         $year = $year ?: Carbon::now()->year;
 
-        $sales = Sale::with(['vendedora', 'financialApprover'])
-            ->whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->orderBy('created_at', 'desc')
+        $sales = Sale::with(['user', 'approvedBy'])
+            ->whereMonth('payment_date', $month)
+            ->whereYear('payment_date', $year)
+            ->orderBy('payment_date', 'desc')
             ->get();
 
         $csv = [];
@@ -38,19 +39,20 @@ class ExcelExportService
         ];
 
         foreach ($sales as $sale) {
+            $commissionValue = $this->calculateCommission($sale);
             $csv[] = [
                 $sale->id,
-                $sale->created_at->format('d/m/Y H:i'),
-                $sale->vendedora->name,
-                $sale->nome_cliente,
-                'R$ ' . number_format($sale->valor_total, 2, ',', '.'),
-                'R$ ' . number_format($sale->valor_frete, 2, ',', '.'),
-                'R$ ' . number_format($sale->valor_total - $sale->valor_frete, 2, ',', '.'),
-                $sale->forma_pagamento,
+                $sale->payment_date->format('d/m/Y'),
+                $sale->user->name,
+                $sale->client_name,
+                'R$ ' . number_format($sale->total_amount, 2, ',', '.'),
+                'R$ ' . number_format($sale->shipping_amount, 2, ',', '.'),
+                'R$ ' . number_format($sale->received_amount, 2, ',', '.'),
+                $sale->payment_method,
                 $this->getStatusLabel($sale->status),
-                $sale->commission ? 'R$ ' . number_format($sale->commission->value, 2, ',', '.') : '-',
-                $sale->financialApprover ? $sale->financialApprover->name : '-',
-                $sale->approved_at ? Carbon::parse($sale->approved_at)->format('d/m/Y H:i') : '-'
+                $commissionValue > 0 ? 'R$ ' . number_format($commissionValue, 2, ',', '.') : '-',
+                $sale->approvedBy ? $sale->approvedBy->name : '-',
+                $sale->approved_at ? $sale->approved_at->format('d/m/Y H:i') : '-'
             ];
         }
 
@@ -61,10 +63,10 @@ class ExcelExportService
         $vendedoras = User::where('role', 'vendedora')->get();
         foreach ($vendedoras as $vendedora) {
             $vendedoraSales = $sales->where('user_id', $vendedora->id);
-            $totalVendido = $vendedoraSales->sum('valor_total');
-            $totalAprovado = $vendedoraSales->where('status', 'approved')->sum('valor_total');
-            $totalComissao = $vendedoraSales->sum(function ($sale) {
-                return $sale->commission ? $sale->commission->value : 0;
+            $totalVendido = $vendedoraSales->sum('total_amount');
+            $totalAprovado = $vendedoraSales->where('status', 'aprovado')->sum('received_amount');
+            $totalComissao = $vendedoraSales->where('status', 'aprovado')->sum(function ($sale) {
+                return $this->calculateCommission($sale);
             });
 
             $csv[] = [
@@ -86,10 +88,9 @@ class ExcelExportService
 
         $vendedoras = User::where('role', 'vendedora')
             ->with(['sales' => function ($query) use ($month, $year) {
-                $query->whereMonth('created_at', $month)
-                    ->whereYear('created_at', $year)
-                    ->where('status', 'approved')
-                    ->with('commission');
+                $query->whereMonth('payment_date', $month)
+                    ->whereYear('payment_date', $year)
+                    ->where('status', 'aprovado');
             }])
             ->get();
 
@@ -106,16 +107,16 @@ class ExcelExportService
         ];
 
         foreach ($vendedoras as $vendedora) {
-            $totalAprovado = $vendedora->sales->sum('valor_total');
+            $totalAprovado = $vendedora->sales->sum('received_amount');
             $totalBase = $vendedora->sales->sum(function ($sale) {
-                return $sale->valor_total - $sale->valor_frete;
+                return $sale->received_amount - $sale->shipping_amount;
             });
             $totalComissao = $vendedora->sales->sum(function ($sale) {
-                return $sale->commission ? $sale->commission->value : 0;
+                return $this->calculateCommission($sale);
             });
 
-            $faixa = $this->getCommissionTier($totalAprovado);
-            $percentual = $this->getCommissionPercentage($totalAprovado);
+            $faixa = $this->getCommissionTier($totalBase);
+            $percentual = $this->getCommissionPercentage($totalBase);
 
             $csv[] = [
                 $vendedora->name,
@@ -130,7 +131,7 @@ class ExcelExportService
         $csv[] = [];
         $csv[] = ['Total Geral', '', '', '', '', 'R$ ' . number_format($vendedoras->sum(function ($v) {
             return $v->sales->sum(function ($s) {
-                return $s->commission ? $s->commission->value : 0;
+                return $this->calculateCommission($s);
             });
         }), 2, ',', '.')];
 
@@ -155,11 +156,38 @@ class ExcelExportService
     private function getStatusLabel($status)
     {
         return match($status) {
-            'pending' => 'Pendente',
-            'approved' => 'Aprovado',
-            'rejected' => 'Rejeitado',
+            'pendente' => 'Pendente',
+            'aprovado' => 'Aprovado',
+            'recusado' => 'Recusado',
             default => $status
         };
+    }
+
+    private function calculateCommission($sale)
+    {
+        if ($sale->status !== 'aprovado') {
+            return 0;
+        }
+
+        $commissionBase = $sale->received_amount - $sale->shipping_amount;
+        
+        // Get seller's monthly total for commission calculation
+        $sellerMonthlyTotal = Sale::where('user_id', $sale->user_id)
+            ->where('status', 'aprovado')
+            ->whereYear('payment_date', $sale->payment_date->year)
+            ->whereMonth('payment_date', $sale->payment_date->month)
+            ->sum(DB::raw('received_amount - shipping_amount'));
+        
+        // Commission tiers based on monthly total
+        if ($sellerMonthlyTotal >= 60000) {
+            return $commissionBase * 0.04; // 4%
+        } elseif ($sellerMonthlyTotal >= 50000) {
+            return $commissionBase * 0.03; // 3%
+        } elseif ($sellerMonthlyTotal >= 40000) {
+            return $commissionBase * 0.02; // 2%
+        }
+        
+        return 0; // No commission if below R$40k
     }
 
     private function getCommissionTier($total)

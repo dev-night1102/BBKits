@@ -1,4 +1,4 @@
-import{x as m,j as e,Q as x,t as h,V as o}from"./app-BsWHPeRh.js";import"./TextInput-D2D_cphq.js";function f(){const{data:i,setData:n,post:l,processing:a,errors:s,reset:d}=m({password:""}),c=r=>{r.preventDefault(),l(route("password.confirm"),{onFinish:()=>d("password"),onSuccess:()=>{o.success("Senha confirmada com sucesso!")},onError:t=>{t.password&&o.error(t.password)}})};return e.jsxs(e.Fragment,{children:[e.jsx(x,{title:"Confirmar Senha - BBKits"}),e.jsx("style",{children:`
+import{x as m,j as e,Q as x,t as h,V as o}from"./app-l0-wBPpP.js";import"./TextInput-BBIlVpCT.js";function f(){const{data:i,setData:n,post:l,processing:a,errors:s,reset:d}=m({password:""}),c=r=>{r.preventDefault(),l(route("password.confirm"),{onFinish:()=>d("password"),onSuccess:()=>{o.success("Senha confirmada com sucesso!")},onError:t=>{t.password&&o.error(t.password)}})};return e.jsxs(e.Fragment,{children:[e.jsx(x,{title:"Confirmar Senha - BBKits"}),e.jsx("style",{children:`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
                 
                 :root {

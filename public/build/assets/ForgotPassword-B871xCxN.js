@@ -1,4 +1,4 @@
-import{x,r as u,V as s,j as e,Q as h,t as i}from"./app-BsWHPeRh.js";import"./TextInput-D2D_cphq.js";function f({status:a}){const{data:n,setData:d,post:c,processing:t,errors:o}=x({email:""});u.useEffect(()=>{a&&s.success(a)},[a]);const m=r=>{r.preventDefault(),c(route("password.email"),{onSuccess:()=>{s.success("Link de recuperação enviado com sucesso!")},onError:l=>{l.email&&s.error(l.email)}})};return e.jsxs(e.Fragment,{children:[e.jsx(h,{title:"Recuperar Senha - BBKits"}),e.jsx("style",{children:`
+import{x,r as u,V as s,j as e,Q as h,t as i}from"./app-l0-wBPpP.js";import"./TextInput-BBIlVpCT.js";function f({status:a}){const{data:n,setData:d,post:c,processing:t,errors:o}=x({email:""});u.useEffect(()=>{a&&s.success(a)},[a]);const m=r=>{r.preventDefault(),c(route("password.email"),{onSuccess:()=>{s.success("Link de recuperação enviado com sucesso!")},onError:l=>{l.email&&s.error(l.email)}})};return e.jsxs(e.Fragment,{children:[e.jsx(h,{title:"Recuperar Senha - BBKits"}),e.jsx("style",{children:`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
                 
                 :root {

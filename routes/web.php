@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminReportsController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\NotificationController;
 use Illuminate\Foundation\Application;
@@ -58,7 +59,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/sales/{sale}/reject', [SaleController::class, 'reject'])->name('admin.sales.reject');
         Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
         
-        // PDF Report routes
+        // Reports routes
+        Route::get('/admin/reports', [AdminReportsController::class, 'index'])->name('admin.reports.index');
         Route::get('/admin/reports/team', [AdminController::class, 'generateTeamReport'])->name('admin.reports.team');
         
         // Excel Export routes

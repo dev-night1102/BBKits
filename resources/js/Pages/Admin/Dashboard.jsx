@@ -355,11 +355,19 @@ export default function Dashboard({ stats, topPerformers, recentSales, monthlyDa
                             <div className="grid gap-8 mb-12 md:grid-cols-2">
                                 {/* Top Performers */}
                                 <div className="card-gradient p-8 relative z-10">
-                                    <div className="flex items-center mb-6">
-                                        <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mr-4 shadow-lg">
-                                            <span className="text-2xl">🏆</span>
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center">
+                                            <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mr-4 shadow-lg">
+                                                <span className="text-2xl">🏆</span>
+                                            </div>
+                                            <h4 className="text-2xl font-bold text-gray-800">Top Vendedoras do Mês</h4>
                                         </div>
-                                        <h4 className="text-2xl font-bold text-gray-800">Top Vendedoras do Mês</h4>
+                                        <a 
+                                            href="/admin/reports" 
+                                            className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors duration-200 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg"
+                                        >
+                                            Ver Relatório Detalhado →
+                                        </a>
                                     </div>
                                     <div className="space-y-4">
                                         {topPerformers && topPerformers.length > 0 ? (
@@ -532,7 +540,7 @@ export default function Dashboard({ stats, topPerformers, recentSales, monthlyDa
                                             ✅ Aprovar Vendas
                                         </a>
                                         <a 
-                                            href="/sales" 
+                                            href="/admin/reports" 
                                             className="quick-action-btn px-6 py-3 text-sm font-semibold text-white rounded-2xl transition-all duration-300 hover:scale-105"
                                         >
                                             📊 Ver Relatórios
