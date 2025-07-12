@@ -1,4 +1,4 @@
-import{j as e,Q as r}from"./app-cO170d2j.js";import{A as s}from"./AuthenticatedLayout-72bgQbl2.js";import o from"./DeleteUserForm-o9SHOip1.js";import n from"./UpdatePasswordForm-CBmfcXn9.js";import l from"./UpdateProfileInformationForm-Tje2sj4H.js";import"./transition-C2sSSXsb.js";import"./dialog-BJeSSFFj.js";import"./TextInput-CVPVmERN.js";function b({mustVerifyEmail:t,status:a}){return e.jsxs(e.Fragment,{children:[e.jsx(r,{title:"Meu Perfil - BBKits"}),e.jsx("style",{children:`
+import{j as e,Q as r}from"./app-QNzT34cD.js";import{A as s}from"./AuthenticatedLayout-DX4CeDBq.js";import o from"./DeleteUserForm-5Pah1Nx4.js";import n from"./UpdatePasswordForm-Dh_Q7LxA.js";import l from"./UpdateProfileInformationForm-C1a6u09_.js";import"./transition-B3WP8PPb.js";import"./dialog-i0pRS43V.js";import"./TextInput-BIYcppcm.js";function b({mustVerifyEmail:t,status:a}){return e.jsxs(e.Fragment,{children:[e.jsx(r,{title:"Meu Perfil - BBKits"}),e.jsx("style",{children:`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
                 
                 :root {
