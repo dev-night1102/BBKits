@@ -55,6 +55,14 @@ class SaleController extends Controller
         ]);
 
         if ($request->hasFile('payment_receipt')) {
+            $file = $request->file('payment_receipt');
+            $fileContent = file_get_contents($file->getRealPath());
+            $mimeType = $file->getMimeType();
+            
+            // Store as base64 data URL
+            $validated['receipt_data'] = 'data:' . $mimeType . ';base64,' . base64_encode($fileContent);
+            
+            // Still store the file path for backward compatibility
             $validated['payment_receipt'] = $request->file('payment_receipt')->store('receipts', 'public');
         }
 
@@ -102,9 +110,19 @@ class SaleController extends Controller
         ]);
 
         if ($request->hasFile('payment_receipt')) {
+            $file = $request->file('payment_receipt');
+            $fileContent = file_get_contents($file->getRealPath());
+            $mimeType = $file->getMimeType();
+            
+            // Store as base64 data URL
+            $validated['receipt_data'] = 'data:' . $mimeType . ';base64,' . base64_encode($fileContent);
+            
+            // Delete old file if exists
             if ($sale->payment_receipt) {
                 Storage::disk('public')->delete($sale->payment_receipt);
             }
+            
+            // Still store the file path for backward compatibility
             $validated['payment_receipt'] = $request->file('payment_receipt')->store('receipts', 'public');
         }
 

@@ -712,16 +712,38 @@ export default function Index({ sales }) {
                                                                                 </button>
                                                                             </>
                                                                         )}
-                                                                        {sale.payment_receipt && (
-                                                                            <a
-                                                                                href={`/storage/${sale.payment_receipt}`}
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                className="action-btn action-btn-receipt"
-                                                                            >
-                                                                                <i className="fas fa-file-pdf mr-1"></i>
-                                                                                Comprovante
-                                                                            </a>
+                                                                        {(sale.payment_receipt || sale.receipt_data) && (
+                                                                            sale.receipt_data ? (
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        // Open base64 image in new tab
+                                                                                        const newWindow = window.open();
+                                                                                        newWindow.document.write(`
+                                                                                            <html>
+                                                                                                <head><title>Comprovante de Pagamento</title></head>
+                                                                                                <body style="margin:0; padding:20px; text-align:center; background:#f5f5f5;">
+                                                                                                    <h2>Comprovante de Pagamento</h2>
+                                                                                                    <img src="${sale.receipt_data}" style="max-width:100%; height:auto; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.1);" />
+                                                                                                </body>
+                                                                                            </html>
+                                                                                        `);
+                                                                                    }}
+                                                                                    className="action-btn action-btn-receipt"
+                                                                                >
+                                                                                    <i className="fas fa-file-image mr-1"></i>
+                                                                                    Comprovante
+                                                                                </button>
+                                                                            ) : (
+                                                                                <a
+                                                                                    href={`/storage/${sale.payment_receipt}`}
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    className="action-btn action-btn-receipt"
+                                                                                >
+                                                                                    <i className="fas fa-file-pdf mr-1"></i>
+                                                                                    Comprovante
+                                                                                </a>
+                                                                            )
                                                                         )}
                                                                     </div>
                                                                 </td>

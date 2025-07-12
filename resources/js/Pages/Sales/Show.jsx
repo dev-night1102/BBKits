@@ -602,7 +602,7 @@ export default function Show({ sale }) {
                             )}
 
                             {/* Payment Receipt */}
-                            {sale.payment_receipt && (
+                            {(sale.payment_receipt || sale.receipt_data) && (
                                 <div className="detail-card animate-fade-in">
                                     <div className="section-title">
                                         <div className="section-icon">
@@ -613,28 +613,44 @@ export default function Show({ sale }) {
                                         </h3>
                                     </div>
                                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white text-2xl">
-                                                <i className="fas fa-file-pdf"></i>
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className="font-bold text-gray-800 mb-2">
-                                                    📄 Comprovante Anexado
+                                        {sale.receipt_data ? (
+                                            // If we have base64 data, display the image directly
+                                            <div className="text-center">
+                                                <h4 className="font-bold text-gray-800 mb-4">
+                                                    📄 Comprovante de Pagamento
                                                 </h4>
-                                                <p className="text-gray-600 text-sm mb-4">
-                                                    Clique no botão abaixo para visualizar o comprovante de pagamento
-                                                </p>
-                                                <a
-                                                    href={`/storage/${sale.payment_receipt}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="btn-gradient"
-                                                >
-                                                    <i className="fas fa-external-link-alt"></i>
-                                                    Ver Comprovante
-                                                </a>
+                                                <img 
+                                                    src={sale.receipt_data} 
+                                                    alt="Comprovante de Pagamento" 
+                                                    className="max-w-full h-auto rounded-lg shadow-lg mx-auto"
+                                                    style={{maxHeight: '600px'}}
+                                                />
                                             </div>
-                                        </div>
+                                        ) : (
+                                            // Fallback to the old method
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white text-2xl">
+                                                    <i className="fas fa-file-pdf"></i>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h4 className="font-bold text-gray-800 mb-2">
+                                                        📄 Comprovante Anexado
+                                                    </h4>
+                                                    <p className="text-gray-600 text-sm mb-4">
+                                                        Clique no botão abaixo para visualizar o comprovante de pagamento
+                                                    </p>
+                                                    <a
+                                                        href={`/storage/${sale.payment_receipt}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="btn-gradient"
+                                                    >
+                                                        <i className="fas fa-external-link-alt"></i>
+                                                        Ver Comprovante
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
