@@ -21,9 +21,39 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     try {
-        if (auth()->user()->role === 'vendedora') {
-            // Temporarily disable gamification to test basic functionality
+        $user = auth()->user();
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+        
+        if ($user->role === 'vendedora') {
+            // Get real sales data for the user
+            $monthlySalesCount = $user->sales()
+                ->whereYear('payment_date', $currentYear)
+                ->whereMonth('payment_date', $currentMonth)
+                ->count();
+                
+            $approvedSalesCount = $user->sales()
+                ->whereYear('payment_date', $currentYear)
+                ->whereMonth('payment_date', $currentMonth)
+                ->where('status', 'aprovado')
+                ->count();
+                
+            $monthlyCommission = $user->getMonthlyCommissionTotal($currentMonth, $currentYear);
+            $monthlySalesTotal = $user->getMonthlySalesTotal($currentMonth, $currentYear);
+            
+            // Calculate progress toward 40k goal
+            $monthlyGoal = 40000;
+            $progressPercentage = $monthlySalesTotal > 0 ? min(($monthlySalesTotal / $monthlyGoal) * 100, 100) : 0;
+            
             return Inertia::render('Dashboard', [
+                'salesData' => [
+                    'monthlySalesCount' => $monthlySalesCount,
+                    'approvedSalesCount' => $approvedSalesCount,
+                    'monthlyCommission' => $monthlyCommission,
+                    'monthlySalesTotal' => $monthlySalesTotal,
+                    'monthlyGoal' => $monthlyGoal,
+                    'progressPercentage' => round($progressPercentage, 1)
+                ],
                 'gamification' => [
                     'level' => [
                         'level' => 1,

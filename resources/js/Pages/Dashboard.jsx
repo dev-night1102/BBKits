@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage } from '@inertiajs/react';
 
 export default function Dashboard() {
-    const { auth, gamification } = usePage().props;
+    const { auth, gamification, salesData } = usePage().props;
     
     return (
         <>
@@ -327,7 +327,7 @@ export default function Dashboard() {
                                         </div>
                                         <div>
                                             <p className="mb-2 text-sm font-medium text-white/90">Vendas Este Mês</p>
-                                            <p className="text-3xl font-bold drop-shadow-lg">0</p>
+                                            <p className="text-3xl font-bold drop-shadow-lg">{salesData?.monthlySalesCount || 0}</p>
                                             <p className="text-xs text-white/80 mt-1">📊 Suas vendas</p>
                                         </div>
                                     </div>
@@ -342,7 +342,9 @@ export default function Dashboard() {
                                         </div>
                                         <div>
                                             <p className="mb-2 text-sm font-medium text-white/90">Comissão do Mês</p>
-                                            <p className="text-2xl font-bold drop-shadow-lg">R$ 0,00</p>
+                                            <p className="text-2xl font-bold drop-shadow-lg">
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyCommission || 0)}
+                                            </p>
                                             <p className="text-xs text-white/80 mt-1">💰 Seus ganhos</p>
                                         </div>
                                     </div>
@@ -357,7 +359,7 @@ export default function Dashboard() {
                                         </div>
                                         <div>
                                             <p className="mb-2 text-sm font-medium text-white/90">Vendas Aprovadas</p>
-                                            <p className="text-3xl font-bold drop-shadow-lg">0</p>
+                                            <p className="text-3xl font-bold drop-shadow-lg">{salesData?.approvedSalesCount || 0}</p>
                                             <p className="text-xs text-white/80 mt-1">✅ Confirmadas</p>
                                         </div>
                                     </div>
@@ -372,7 +374,9 @@ export default function Dashboard() {
                                         </div>
                                         <div>
                                             <p className="mb-2 text-sm font-medium text-white/90">Meta do Mês</p>
-                                            <p className="text-2xl font-bold drop-shadow-lg">R$ 40.000,00</p>
+                                            <p className="text-2xl font-bold drop-shadow-lg">
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyGoal || 40000)}
+                                            </p>
                                             <p className="text-xs text-white/80 mt-1">🎯 Objetivo</p>
                                         </div>
                                     </div>
@@ -389,9 +393,9 @@ export default function Dashboard() {
                                         <h4 className="text-2xl font-bold text-gray-800">Progresso da Meta</h4>
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-4 shadow-inner mb-4">
-                                        <div className="progress-bar h-4 rounded-full shadow-lg" style={{width: '0%'}}></div>
+                                        <div className="progress-bar h-4 rounded-full shadow-lg" style={{width: `${salesData?.progressPercentage || 0}%`}}></div>
                                     </div>
-                                    <p className="text-lg font-medium text-gray-700 mb-6">0% da meta mensal alcançada</p>
+                                    <p className="text-lg font-medium text-gray-700 mb-6">{salesData?.progressPercentage || 0}% da meta mensal alcançada</p>
                                     <div className="motivational-card p-6 rounded-2xl text-white relative overflow-hidden">
                                         <div className="relative z-10">
                                             <p className="text-lg font-semibold mb-2">💪 Dica Motivacional</p>
