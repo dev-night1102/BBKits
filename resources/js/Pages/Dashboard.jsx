@@ -3,6 +3,7 @@ import { Head, usePage } from '@inertiajs/react';
 
 export default function Dashboard() {
     const { auth, gamification, salesData, recentSales } = usePage().props;
+    console.log('Dashboard Props:', { salesData, recentSales });
     
     return (
         <>
