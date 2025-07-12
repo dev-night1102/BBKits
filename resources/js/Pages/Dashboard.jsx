@@ -432,7 +432,6 @@ export default function Dashboard() {
                                             <span className="text-2xl">📋</span>
                                         </div>
                                         <h4 className="text-2xl font-bold text-gray-800">Últimas Vendas</h4>
-                                        <p className="text-xs text-gray-500">Debug: {recentSales ? `${recentSales.length} sales found` : 'No recentSales prop'}</p>
                                     </div>
                                     {recentSales && recentSales.length > 0 ? (
                                         <div className="space-y-4">

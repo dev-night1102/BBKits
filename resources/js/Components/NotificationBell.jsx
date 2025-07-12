@@ -19,7 +19,8 @@ export default function NotificationBell() {
             const response = await axios.get('/notifications/unread-count');
             setUnreadCount(response.data.count);
         } catch (error) {
-            console.error('Error fetching notifications:', error);
+            // Silently handle errors to avoid console spam
+            setUnreadCount(0);
         }
     };
 
@@ -28,7 +29,8 @@ export default function NotificationBell() {
             const response = await axios.get('/notifications');
             setNotifications(response.data.notifications);
         } catch (error) {
-            console.error('Error fetching notifications:', error);
+            // Silently handle errors
+            setNotifications([]);
         }
     };
 
@@ -38,7 +40,7 @@ export default function NotificationBell() {
             fetchUnreadCount();
             fetchNotifications();
         } catch (error) {
-            console.error('Error marking notification as read:', error);
+            // Silently handle errors
         }
     };
 
@@ -48,7 +50,7 @@ export default function NotificationBell() {
             setUnreadCount(0);
             fetchNotifications();
         } catch (error) {
-            console.error('Error marking all as read:', error);
+            // Silently handle errors
         }
     };
 
