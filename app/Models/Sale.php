@@ -16,6 +16,7 @@ class Sale extends Model
         'received_amount',
         'payment_date',
         'payment_receipt',
+        'receipt_data',
         'notes',
         'status',
         'admin_notes',
@@ -68,5 +69,25 @@ class Sale extends Model
     public function isRejected(): bool
     {
         return $this->status === 'recusado';
+    }
+
+    public function getReceiptUrl(): ?string
+    {
+        // If we have base64 data, return it as data URL
+        if ($this->receipt_data) {
+            return $this->receipt_data;
+        }
+        
+        // Fallback to file path if it exists
+        if ($this->payment_receipt) {
+            return asset('storage/' . $this->payment_receipt);
+        }
+        
+        return null;
+    }
+
+    public function hasReceipt(): bool
+    {
+        return !empty($this->receipt_data) || !empty($this->payment_receipt);
     }
 }
