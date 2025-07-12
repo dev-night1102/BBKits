@@ -151,7 +151,7 @@ class ProcessSaleApproval implements ShouldQueue
             }
         } catch (\Exception $e) {
             Log::error('Failed to clear processing lock', [
-                'sale_id' => $this->saleId,
+                'sale_id' => $this->saleId, 
                 'error' => $e->getMessage()
             ]);
         }
