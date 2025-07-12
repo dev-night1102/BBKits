@@ -38,8 +38,21 @@ Route::get('/dashboard', function () {
                 ->where('status', 'aprovado')
                 ->count();
                 
+            $approvedSalesTotal = $user->sales()
+                ->whereYear('payment_date', $currentYear)
+                ->whereMonth('payment_date', $currentMonth)
+                ->where('status', 'aprovado')
+                ->sum('sale_value');
+                
             $monthlyCommission = $user->getMonthlyCommissionTotal($currentMonth, $currentYear);
             $monthlySalesTotal = $user->getMonthlySalesTotal($currentMonth, $currentYear);
+            
+            // Get recent sales for the user
+            $recentSales = $user->sales()
+                ->with(['user'])
+                ->latest()
+                ->limit(5)
+                ->get();
             
             // Calculate progress toward 40k goal
             $monthlyGoal = 40000;
@@ -49,11 +62,13 @@ Route::get('/dashboard', function () {
                 'salesData' => [
                     'monthlySalesCount' => $monthlySalesCount,
                     'approvedSalesCount' => $approvedSalesCount,
+                    'approvedSalesTotal' => $approvedSalesTotal,
                     'monthlyCommission' => $monthlyCommission,
                     'monthlySalesTotal' => $monthlySalesTotal,
                     'monthlyGoal' => $monthlyGoal,
                     'progressPercentage' => round($progressPercentage, 1)
                 ],
+                'recentSales' => $recentSales,
                 'gamification' => [
                     'level' => [
                         'level' => 1,

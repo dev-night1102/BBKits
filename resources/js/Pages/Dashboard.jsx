@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage } from '@inertiajs/react';
 
 export default function Dashboard() {
-    const { auth, gamification, salesData } = usePage().props;
+    const { auth, gamification, salesData, recentSales } = usePage().props;
     
     return (
         <>
@@ -326,9 +326,11 @@ export default function Dashboard() {
                                             </svg>
                                         </div>
                                         <div>
-                                            <p className="mb-2 text-sm font-medium text-white/90">Vendas Este Mês</p>
-                                            <p className="text-3xl font-bold drop-shadow-lg">{salesData?.monthlySalesCount || 0}</p>
-                                            <p className="text-xs text-white/80 mt-1">📊 Suas vendas</p>
+                                            <p className="mb-2 text-sm font-medium text-white/90">Total de Vendas</p>
+                                            <p className="text-2xl font-bold drop-shadow-lg">
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlySalesTotal || 0)}
+                                            </p>
+                                            <p className="text-xs text-white/80 mt-1">💼 {salesData?.monthlySalesCount || 0} vendas cadastradas</p>
                                         </div>
                                     </div>
                                 </div>
@@ -359,8 +361,10 @@ export default function Dashboard() {
                                         </div>
                                         <div>
                                             <p className="mb-2 text-sm font-medium text-white/90">Vendas Aprovadas</p>
-                                            <p className="text-3xl font-bold drop-shadow-lg">{salesData?.approvedSalesCount || 0}</p>
-                                            <p className="text-xs text-white/80 mt-1">✅ Confirmadas</p>
+                                            <p className="text-2xl font-bold drop-shadow-lg">
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.approvedSalesTotal || 0)}
+                                            </p>
+                                            <p className="text-xs text-white/80 mt-1">✅ {salesData?.approvedSalesCount || 0} aprovadas</p>
                                         </div>
                                     </div>
                                 </div>
@@ -395,7 +399,20 @@ export default function Dashboard() {
                                     <div className="w-full bg-gray-200 rounded-full h-4 shadow-inner mb-4">
                                         <div className="progress-bar h-4 rounded-full shadow-lg" style={{width: `${salesData?.progressPercentage || 0}%`}}></div>
                                     </div>
-                                    <p className="text-lg font-medium text-gray-700 mb-6">{salesData?.progressPercentage || 0}% da meta mensal alcançada</p>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <p className="text-lg font-medium text-gray-700">{salesData?.progressPercentage || 0}% da meta mensal alcançada</p>
+                                        <p className="text-sm text-gray-600 bg-white/70 px-3 py-1 rounded-full">
+                                            Meta: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyGoal || 40000)}
+                                        </p>
+                                    </div>
+                                    <div className="mb-6">
+                                        <p className="text-sm text-gray-600 mb-2">
+                                            Vendido: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlySalesTotal || 0)} de R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyGoal || 40000)}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            Faltam: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(Math.max(0, (salesData?.monthlyGoal || 40000) - (salesData?.monthlySalesTotal || 0)))}
+                                        </p>
+                                    </div>
                                     <div className="motivational-card p-6 rounded-2xl text-white relative overflow-hidden">
                                         <div className="relative z-10">
                                             <p className="text-lg font-semibold mb-2">💪 Dica Motivacional</p>
@@ -412,15 +429,51 @@ export default function Dashboard() {
                                         </div>
                                         <h4 className="text-2xl font-bold text-gray-800">Últimas Vendas</h4>
                                     </div>
-                                    <div className="text-center py-12">
-                                        <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                                            <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
+                                    {recentSales && recentSales.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {recentSales.map((sale, index) => (
+                                                <div key={sale.id} className="flex items-center justify-between p-4 bg-white/50 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-3 h-3 rounded-full ${
+                                                                sale.status === 'aprovado' ? 'bg-green-500' :
+                                                                sale.status === 'rejeitado' ? 'bg-red-500' :
+                                                                'bg-yellow-500'
+                                                            }`}></div>
+                                                            <span className="font-medium text-gray-800">{sale.customer_name}</span>
+                                                        </div>
+                                                        <p className="text-sm text-gray-600 mt-1">
+                                                            {sale.product_name} • {new Date(sale.payment_date).toLocaleDateString('pt-BR')}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="font-bold text-gray-800">
+                                                            R$ {parseFloat(sale.sale_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                        </p>
+                                                        <span className={`text-xs px-2 py-1 rounded-full ${
+                                                            sale.status === 'aprovado' ? 'bg-green-100 text-green-800' :
+                                                            sale.status === 'rejeitado' ? 'bg-red-100 text-red-800' :
+                                                            'bg-yellow-100 text-yellow-800'
+                                                        }`}>
+                                                            {sale.status === 'aprovado' ? 'Aprovado' :
+                                                             sale.status === 'rejeitado' ? 'Rejeitado' :
+                                                             'Pendente'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <p className="text-xl font-semibold text-gray-600 mb-2">Nenhuma venda registrada ainda</p>
-                                        <p className="text-gray-500">Registre sua primeira venda para começar! 🚀</p>
-                                    </div>
+                                    ) : (
+                                        <div className="text-center py-12">
+                                            <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                                <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </div>
+                                            <p className="text-xl font-semibold text-gray-600 mb-2">Nenhuma venda registrada ainda</p>
+                                            <p className="text-gray-500">Registre sua primeira venda para começar! 🚀</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             
