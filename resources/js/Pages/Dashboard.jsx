@@ -440,15 +440,15 @@ export default function Dashboard() {
                                                                 sale.status === 'rejeitado' ? 'bg-red-500' :
                                                                 'bg-yellow-500'
                                                             }`}></div>
-                                                            <span className="font-medium text-gray-800">{sale.customer_name}</span>
+                                                            <span className="font-medium text-gray-800">{sale.client_name}</span>
                                                         </div>
                                                         <p className="text-sm text-gray-600 mt-1">
-                                                            {sale.product_name} • {new Date(sale.payment_date).toLocaleDateString('pt-BR')}
+                                                            Recebido: R$ {parseFloat(sale.received_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} • {new Date(sale.payment_date).toLocaleDateString('pt-BR')}
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="font-bold text-gray-800">
-                                                            R$ {parseFloat(sale.sale_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                            R$ {parseFloat(sale.total_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                                         </p>
                                                         <span className={`text-xs px-2 py-1 rounded-full ${
                                                             sale.status === 'aprovado' ? 'bg-green-100 text-green-800' :
