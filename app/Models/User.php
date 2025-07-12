@@ -92,6 +92,6 @@ class User extends Authenticatable
             ->whereYear('payment_date', $year)
             ->whereMonth('payment_date', $month)
             ->where('status', 'aprovado')
-            ->sum('received_amount');
+            ->sum('total_amount');
     }
 }

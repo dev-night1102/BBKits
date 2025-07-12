@@ -42,15 +42,14 @@ Route::get('/dashboard', function () {
                 ->whereYear('payment_date', $currentYear)
                 ->whereMonth('payment_date', $currentMonth)
                 ->where('status', 'aprovado')
-                ->sum('received_amount');
+                ->sum('total_amount');
                 
             $monthlyCommission = $user->getMonthlyCommissionTotal($currentMonth, $currentYear);
             $monthlySalesTotal = $user->getMonthlySalesTotal($currentMonth, $currentYear);
             
-            // Get recent sales for the user
+            // Get recent sales for the user  
             $recentSales = $user->sales()
-                ->with(['user'])
-                ->latest()
+                ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
             
