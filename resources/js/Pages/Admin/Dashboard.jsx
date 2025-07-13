@@ -629,6 +629,12 @@ export default function Dashboard({ stats, topPerformers, recentSales, monthlyDa
                                         >
                                             📥 Exportar Excel
                                         </a>
+                                        <a 
+                                            href="/admin/commission-ranges" 
+                                            className="quick-action-btn px-6 py-3 text-sm font-semibold text-white rounded-2xl transition-all duration-300 hover:scale-105"
+                                        >
+                                            💎 Comissões
+                                        </a>
                                     </div>
                                 </div>
                             </div>

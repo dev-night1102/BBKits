@@ -424,6 +424,94 @@ export default function Dashboard() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Commission Insights */}
+                                <div className="card-gradient p-8 relative z-10">
+                                    <div className="flex items-center mb-6">
+                                        <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center mr-4 shadow-lg">
+                                            <span className="text-2xl">💎</span>
+                                        </div>
+                                        <h4 className="text-2xl font-bold text-gray-800">Insights de Comissão</h4>
+                                    </div>
+                                    
+                                    {/* Current Commission Rate */}
+                                    <div className="mb-6 p-4 bg-white/70 rounded-xl">
+                                        <p className="text-sm font-medium text-gray-600 mb-1">Taxa Atual de Comissão</p>
+                                        <p className="text-3xl font-bold text-purple-600">{salesData?.currentRate || 0}%</p>
+                                    </div>
+
+                                    {/* Opportunity Alert */}
+                                    {salesData?.opportunityAlert && (
+                                        <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+                                            <div className="flex items-start">
+                                                <span className="text-2xl mr-3">🎯</span>
+                                                <div>
+                                                    <p className="font-semibold text-yellow-800 mb-1">Oportunidade!</p>
+                                                    <p className="text-sm text-yellow-700">{salesData.opportunityAlert.message}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Next Bracket Info */}
+                                    {salesData?.nextBracket && (
+                                        <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                                            <p className="text-sm font-medium text-gray-600 mb-2">Próxima Faixa de Comissão</p>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <p className="text-lg font-semibold text-gray-800">
+                                                    R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData.nextBracket.min_amount)}
+                                                </p>
+                                                <p className="text-2xl font-bold text-purple-600">{salesData.nextBracket.percentage}%</p>
+                                            </div>
+                                            <p className="text-sm text-gray-600">
+                                                Faltam <span className="font-bold text-purple-600">
+                                                    R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData.nextBracket.amount_needed)}
+                                                </span> para alcançar
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Earnings Simulation */}
+                                    {salesData?.potentialEarnings && (
+                                        <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                                            <div className="flex items-start">
+                                                <span className="text-2xl mr-3">💰</span>
+                                                <div className="flex-1">
+                                                    <p className="font-semibold text-green-800 mb-2">Simulação de Ganhos</p>
+                                                    <p className="text-sm text-green-700 mb-1">
+                                                        Comissão atual: <span className="font-bold">
+                                                            R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData.potentialEarnings.current_commission)}
+                                                        </span>
+                                                    </p>
+                                                    <p className="text-sm text-green-700">
+                                                        Se vender mais <span className="font-bold">R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData.nextBracket?.amount_needed || 0)}</span>, 
+                                                        você ganhará <span className="font-bold text-green-600">
+                                                            +R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData.potentialEarnings.additional_commission)}
+                                                        </span> de comissão!
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Commission Ranges Table */}
+                                    {salesData?.commissionRanges && salesData.commissionRanges.length > 0 && (
+                                        <div className="mt-6">
+                                            <p className="text-sm font-medium text-gray-600 mb-3">Tabela de Comissões</p>
+                                            <div className="space-y-2">
+                                                {salesData.commissionRanges.map((range, index) => (
+                                                    <div key={index} className="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+                                                        <span className="text-sm text-gray-700">
+                                                            R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(range.min_amount)}
+                                                            {range.max_amount ? ` - R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(range.max_amount)}` : '+'}
+                                                        </span>
+                                                        <span className="font-bold text-purple-600">{range.percentage}%</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 
                                 {/* Recent Sales */}
                                 <div className="card-gradient p-8 relative z-10">

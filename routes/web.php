@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminReportsController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Admin\CommissionRangeController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -26,6 +27,9 @@ Route::get('/dashboard', function () {
         $currentYear = now()->year;
         
         if ($user->role === 'vendedora') {
+            // Get commission service instance
+            $commissionService = app(\App\Services\CommissionService::class);
+            
             // Get real sales data for the user
             $monthlySalesCount = $user->sales()
                 ->whereYear('payment_date', $currentYear)
@@ -52,10 +56,18 @@ Route::get('/dashboard', function () {
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
+                
+            // Add debugging
+            \Log::info('Sales Debug', [
+                'user_id' => $user->id,
+                'total_sales' => $user->sales()->count(),
+                'recent_sales_count' => $recentSales->count(),
+                'monthly_total' => $monthlySalesTotal,
+                'first_sale' => $user->sales()->first()
+            ]);
             
-            // Calculate progress toward 40k goal
-            $monthlyGoal = 40000;
-            $progressPercentage = $monthlySalesTotal > 0 ? min(($monthlySalesTotal / $monthlyGoal) * 100, 100) : 0;
+            // Get comprehensive monthly progress including commission insights
+            $monthlyProgress = $commissionService->getMonthlyProgress($user, $currentMonth, $currentYear);
             
             return Inertia::render('Dashboard', [
                 'salesData' => [
@@ -64,8 +76,13 @@ Route::get('/dashboard', function () {
                     'approvedSalesTotal' => $approvedSalesTotal,
                     'monthlyCommission' => $monthlyCommission,
                     'monthlySalesTotal' => $monthlySalesTotal,
-                    'monthlyGoal' => $monthlyGoal,
-                    'progressPercentage' => round($progressPercentage, 1)
+                    'monthlyGoal' => $monthlyProgress['remaining_to_goal'] + $monthlySalesTotal,
+                    'progressPercentage' => round($monthlyProgress['progress_percentage'], 1),
+                    'currentRate' => $monthlyProgress['current_rate'],
+                    'nextBracket' => $monthlyProgress['next_bracket'],
+                    'potentialEarnings' => $monthlyProgress['potential_earnings'],
+                    'opportunityAlert' => $monthlyProgress['opportunity_alert'],
+                    'commissionRanges' => $monthlyProgress['commission_ranges']
                 ],
                 'recentSales' => $recentSales,
                 'gamification' => [
@@ -114,6 +131,12 @@ Route::middleware('auth')->group(function () {
         // Excel Export routes
         Route::get('/admin/export/sales', [ExportController::class, 'exportSales'])->name('admin.export.sales');
         Route::get('/admin/export/commissions', [ExportController::class, 'exportCommissions'])->name('admin.export.commissions');
+        
+        // Commission Range Management routes
+        Route::get('/admin/commission-ranges', [CommissionRangeController::class, 'index'])->name('admin.commission-ranges.index');
+        Route::post('/admin/commission-ranges', [CommissionRangeController::class, 'store'])->name('admin.commission-ranges.store');
+        Route::put('/admin/commission-ranges/{commissionRange}', [CommissionRangeController::class, 'update'])->name('admin.commission-ranges.update');
+        Route::delete('/admin/commission-ranges/{commissionRange}', [CommissionRangeController::class, 'destroy'])->name('admin.commission-ranges.destroy');
     });
     
     // Sales report routes (accessible by sales users for their own reports)
