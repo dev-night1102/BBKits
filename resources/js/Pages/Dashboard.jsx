@@ -1,8 +1,16 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import SalesModal from '@/Components/SalesModal';
+import RankingDisplay from '@/Components/RankingDisplay';
 
 export default function Dashboard() {
     const { auth, gamification, salesData, recentSales } = usePage().props;
+    const [modalOpen, setModalOpen] = useState(false);
+    
+    const handleViewSales = () => {
+        setModalOpen(true);
+    };
     
     // Debug log
     console.log('Dashboard Props:', { salesData, recentSales });
@@ -513,6 +521,77 @@ export default function Dashboard() {
                                     )}
                                 </div>
                                 
+                                {/* 7-Point Detailed Information System */}
+                                <div className="card-gradient p-8 relative z-10">
+                                    <div className="flex items-center mb-6">
+                                        <div className="w-12 h-12 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full flex items-center justify-center mr-4 shadow-lg">
+                                            <span className="text-2xl">📊</span>
+                                        </div>
+                                        <h4 className="text-2xl font-bold text-gray-800">Informações Detalhadas</h4>
+                                    </div>
+                                    
+                                    <div className="space-y-3 mb-6">
+                                        {/* 1. Total Sales */}
+                                        <div className="flex justify-between items-center p-4 bg-white/50 rounded-lg border border-gray-200">
+                                            <span className="text-sm font-medium text-gray-600">1. Total de Vendas</span>
+                                            <span className="text-lg font-bold text-gray-800">
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.totalSalesAmount || 0)}
+                                            </span>
+                                        </div>
+                                        
+                                        {/* 2. Approved Sales */}
+                                        <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg border border-green-200">
+                                            <span className="text-sm font-medium text-green-600">2. Vendas Aprovadas</span>
+                                            <span className="text-lg font-bold text-green-800">
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.approvedSalesTotal || 0)}
+                                            </span>
+                                        </div>
+                                        
+                                        {/* 3. Pending Sales */}
+                                        <div className="flex justify-between items-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                                            <span className="text-sm font-medium text-yellow-600">3. Vendas Pendentes</span>
+                                            <span className="text-lg font-bold text-yellow-800">
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.pendingSalesTotal || 0)}
+                                            </span>
+                                        </div>
+                                        
+                                        {/* 4. Total Shipping */}
+                                        <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                            <span className="text-sm font-medium text-blue-600">4. Total de Frete</span>
+                                            <span className="text-lg font-bold text-blue-800">
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.totalShipping || 0)}
+                                            </span>
+                                        </div>
+                                        
+                                        {/* 5. Commission Base */}
+                                        <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+                                            <span className="text-sm font-medium text-purple-600">5. Base de Comissão</span>
+                                            <span className="text-lg font-bold text-purple-800">
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.commissionBase || 0)}
+                                            </span>
+                                        </div>
+                                        
+                                        {/* 6. Total Commission */}
+                                        <div className="flex justify-between items-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                                            <span className="text-sm font-medium text-orange-600">6. Comissão Total ({salesData?.currentRate || 0}%)</span>
+                                            <span className="text-lg font-bold text-orange-800">
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyCommission || 0)}
+                                            </span>
+                                        </div>
+                                        
+                                        {/* 7. View All Sales Button */}
+                                        <button
+                                            onClick={handleViewSales}
+                                            className="w-full p-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                            7. Ver Todas as Vendas
+                                        </button>
+                                    </div>
+                                </div>
+                                
                                 {/* Recent Sales */}
                                 <div className="card-gradient p-8 relative z-10">
                                     <div className="flex items-center mb-6">
@@ -677,56 +756,14 @@ export default function Dashboard() {
                                         </div>
                                     )}
 
-                                    {/* Monthly Ranking */}
+                                    {/* Enhanced Ranking Display */}
                                     {gamification.ranking && gamification.ranking.length > 0 && (
-                                        <div className="card-gradient p-8 relative z-10">
-                                            <div className="flex items-center mb-6">
-                                                <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center mr-4 shadow-lg">
-                                                    <span className="text-2xl">🏅</span>
-                                                </div>
-                                                <h3 className="text-2xl font-bold text-gray-900">Ranking Mensal</h3>
-                                            </div>
-                                            <div className="space-y-4">
-                                                {gamification.ranking.slice(0, 5).map((item) => (
-                                                    <div key={item.user.id} className={`ranking-card flex items-center justify-between p-6 rounded-2xl shadow-md ${
-                                                        item.user.id === auth.user.id ? 'user-highlight' : 'bg-white/70'
-                                                    }`}>
-                                                        <div className="flex items-center">
-                                                            <div className="flex items-center mr-6">
-                                                                <span className="text-3xl mr-3">{item.badge.icon}</span>
-                                                                <span className="font-bold text-2xl text-gray-800">{item.position}º</span>
-                                                            </div>
-                                                            <div>
-                                                                <div className={`font-bold text-lg ${
-                                                                    item.user.id === auth.user.id ? 'text-pink-800' : 'text-gray-900'
-                                                                }`}>
-                                                                    {item.user.name} 
-                                                                    {item.user.id === auth.user.id && (
-                                                                        <span className="ml-2 px-3 py-1 bg-pink-500 text-white text-sm rounded-full">
-                                                                            Você 👑
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <div className="text-gray-600 font-medium">
-                                                                    📊 {item.monthly_sales_count} vendas • 🌟 Nível {item.level.level}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <div className="font-bold text-2xl text-green-600">
-                                                                R$ {new Intl.NumberFormat('pt-BR').format(item.monthly_total)}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            {gamification.userPosition > 5 && (
-                                                <div className="mt-6 p-6 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl border-2 border-blue-300 shadow-lg">
-                                                    <div className="text-center text-blue-800 font-semibold text-lg">
-                                                        💪 Você está na {gamification.userPosition}ª posição! Continue vendendo para subir no ranking! 🚀
-                                                    </div>
-                                                </div>
-                                            )}
+                                        <div className="mb-8 animate-fadeInUp">
+                                            <RankingDisplay 
+                                                ranking={gamification.ranking}
+                                                currentUser={auth.user}
+                                                showFull={false}
+                                            />
                                         </div>
                                     )}
                                 </>
@@ -735,6 +772,14 @@ export default function Dashboard() {
                     </div>
                 </div>
             </AuthenticatedLayout>
+            
+            {/* Sales Modal */}
+            <SalesModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                sales={recentSales || []}
+                sellerName={auth.user.name || ''}
+            />
 
             {/* Font Awesome Icons */}
             <link

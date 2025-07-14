@@ -83,13 +83,22 @@ class User extends Authenticatable
         // Calculate commission dynamically using the same logic as admin reports
         $commissionService = app(\App\Services\CommissionService::class);
         
-        // Get commission base for the month
+        // Get commission base for the month - only fully paid sales
         $commissionBase = $this->sales()
             ->where('status', 'aprovado')
             ->whereYear('payment_date', $year)
             ->whereMonth('payment_date', $month)
+            ->with('payments')
             ->get()
+            ->filter(function ($sale) {
+                // Only include sales that are fully paid
+                return $sale->hasPartialPayments() ? $sale->isFullyPaid() : true;
+            })
             ->sum(function ($sale) {
+                // Use payment-based commission calculation if has partial payments
+                if ($sale->hasPartialPayments()) {
+                    return $sale->getCommissionBaseAmountForPayments();
+                }
                 return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
             });
         
@@ -105,5 +114,10 @@ class User extends Authenticatable
             ->whereMonth('payment_date', $month)
             ->where('status', 'aprovado')
             ->sum('received_amount');
+    }
+
+    public function isSeller(): bool
+    {
+        return $this->role === 'vendedora';
     }
 }

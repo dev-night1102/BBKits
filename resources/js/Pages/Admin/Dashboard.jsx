@@ -1,6 +1,7 @@
 import { Head, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useEffect, useState } from 'react';
+import RankingDisplay from '@/Components/RankingDisplay';
 
 export default function Dashboard({ stats, topPerformers, recentSales, monthlyData }) {
     const { auth } = usePage().props;
@@ -73,6 +74,105 @@ export default function Dashboard({ stats, topPerformers, recentSales, monthlyDa
                 {labels[status]}
             </span>
         );
+    };
+
+    // Transform topPerformers data to match RankingDisplay component format
+    const transformTopPerformersToRanking = (performers) => {
+        return performers.map((performer, index) => ({
+            position: index + 1,
+            user: {
+                id: performer.id,
+                name: performer.name,
+                email: performer.email,
+                role: performer.role
+            },
+            monthly_total: performer.total_revenue,
+            monthly_sales_count: performer.sales_count,
+            level: {
+                level: performer.total_revenue >= 60000 ? 'Elite' : 
+                       performer.total_revenue >= 50000 ? 'Avançada' : 
+                       performer.total_revenue >= 40000 ? 'Intermediária' : 'Iniciante'
+            },
+            badge: getPositionBadge(index + 1),
+            motivational_message: getPositionMotivationalMessage(index + 1, performer.total_revenue),
+            turnaround_alert: null // Admin view doesn't need turnaround alerts
+        }));
+    };
+
+    // Helper function to get position badge
+    const getPositionBadge = (position) => {
+        switch (position) {
+            case 1:
+                return {
+                    icon: '🥇',
+                    color: 'text-yellow-500',
+                    bg_color: 'bg-yellow-50',
+                    border_color: 'border-yellow-300',
+                    name: '1º Lugar',
+                    title: 'Campeã do Mês! 👑'
+                };
+            case 2:
+                return {
+                    icon: '🥈',
+                    color: 'text-gray-500',
+                    bg_color: 'bg-gray-50',
+                    border_color: 'border-gray-300',
+                    name: '2º Lugar',
+                    title: 'Vice-Campeã! 🌟'
+                };
+            case 3:
+                return {
+                    icon: '🥉',
+                    color: 'text-orange-600',
+                    bg_color: 'bg-orange-50',
+                    border_color: 'border-orange-300',
+                    name: '3º Lugar',
+                    title: 'Terceiro Lugar! 🎉'
+                };
+            default:
+                return {
+                    icon: '🏅',
+                    color: 'text-blue-500',
+                    bg_color: 'bg-blue-50',
+                    border_color: 'border-blue-300',
+                    name: position + 'º Lugar',
+                    title: 'Top ' + position + '! 💪'
+                };
+        }
+    };
+
+    // Helper function to get motivational message
+    const getPositionMotivationalMessage = (position, monthlyTotal) => {
+        switch (position) {
+            case 1:
+                return {
+                    type: 'champion',
+                    title: '🏆 Vendedora Campeã BBKits!',
+                    message: 'Parabéns! Você está liderando o ranking e inspirando toda a equipe com seu desempenho excepcional!',
+                    emoji: '👑'
+                };
+            case 2:
+                return {
+                    type: 'vice_champion',
+                    title: '🌟 Vice-Campeã BBKits!',
+                    message: 'Excelente trabalho! Você está entre as melhores e muito próxima da liderança!',
+                    emoji: '🥈'
+                };
+            case 3:
+                return {
+                    type: 'third_place',
+                    title: '🎉 Terceiro Lugar BBKits!',
+                    message: 'Ótimo desempenho! Você está no pódio e tem potencial para subir ainda mais!',
+                    emoji: '🥉'
+                };
+            default:
+                return {
+                    type: 'growth',
+                    title: '📈 Vendedora em Ascensão!',
+                    message: 'Você está construindo um ótimo resultado! Continue assim e logo estará no pódio!',
+                    emoji: '🌟'
+                };
+        }
     };
 
     return (
@@ -431,50 +531,33 @@ export default function Dashboard({ stats, topPerformers, recentSales, monthlyDa
                             </div>
                             
                             <div className="grid gap-8 mb-12 md:grid-cols-2">
-                                {/* Top Performers */}
-                                <div className="card-gradient p-8 relative z-10">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className="flex items-center">
-                                            <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mr-4 shadow-lg">
-                                                <span className="text-2xl">🏆</span>
+                                {/* Enhanced Top Performers Ranking */}
+                                <div className="animate-fadeInUp">
+                                    {topPerformers && topPerformers.length > 0 ? (
+                                        <div className="mb-4">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h4 className="text-lg font-bold text-gray-800">Ranking das Vendedoras</h4>
+                                                <a 
+                                                    href="/admin/reports" 
+                                                    className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors duration-200 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg"
+                                                >
+                                                    Ver Relatório Detalhado →
+                                                </a>
                                             </div>
-                                            <h4 className="text-2xl font-bold text-gray-800">Top Vendedoras do Mês</h4>
+                                            <RankingDisplay 
+                                                ranking={transformTopPerformersToRanking(topPerformers)}
+                                                currentUser={auth.user}
+                                                showFull={true}
+                                            />
                                         </div>
-                                        <a 
-                                            href="/admin/reports" 
-                                            className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors duration-200 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg"
-                                        >
-                                            Ver Relatório Detalhado →
-                                        </a>
-                                    </div>
-                                    <div className="space-y-4">
-                                        {topPerformers && topPerformers.length > 0 ? (
-                                            topPerformers.map((performer, index) => (
-                                                <div key={performer.id} className="flex items-center justify-between p-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
-                                                    <div className="flex items-center">
-                                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold mr-4 ranking-badge shadow-lg ${
-                                                            index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : 
-                                                            index === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-500' : 
-                                                            index === 2 ? 'bg-gradient-to-r from-orange-400 to-orange-600' : 'bg-gradient-to-r from-purple-400 to-purple-600'
-                                                        }`}>
-                                                            {index === 0 ? '👑' : index + 1}
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-lg font-semibold text-gray-900">{performer.name}</p>
-                                                            <p className="text-sm text-gray-600">✨ {performer.sales_count} vendas realizadas</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-lg font-bold text-green-600">
-                                                            {formatCurrency(performer.total_revenue)}
-                                                        </p>
-                                                        <p className="text-sm text-gray-500">
-                                                            💎 {formatCurrency(performer.total_commission)}
-                                                        </p>
-                                                    </div>
+                                    ) : (
+                                        <div className="card-gradient p-8 relative z-10">
+                                            <div className="flex items-center mb-6">
+                                                <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mr-4 shadow-lg">
+                                                    <span className="text-2xl">🏆</span>
                                                 </div>
-                                            ))
-                                        ) : (
+                                                <h4 className="text-2xl font-bold text-gray-800">Top Vendedoras do Mês</h4>
+                                            </div>
                                             <div className="text-center py-8">
                                                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                                     <span className="text-2xl">📊</span>
@@ -482,8 +565,8 @@ export default function Dashboard({ stats, topPerformers, recentSales, monthlyDa
                                                 <p className="text-gray-500 text-lg">Nenhuma venda este mês ainda</p>
                                                 <p className="text-gray-400 text-sm">Seja a primeira! 🚀</p>
                                             </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
                                 
                                 {/* Monthly Progress */}

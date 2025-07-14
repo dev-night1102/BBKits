@@ -1,11 +1,15 @@
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SalesModal from '@/Components/SalesModal';
 
 export default function ReportsIndex({ salesData, commissionData, totalStats }) {
     const { auth } = usePage().props;
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedSeller, setSelectedSeller] = useState(null);
+    const [selectedSellerSales, setSelectedSellerSales] = useState([]);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('pt-BR', {
@@ -42,6 +46,43 @@ export default function ReportsIndex({ salesData, commissionData, totalStats }) 
     const handleExport = (type) => {
         const url = `/admin/export/${type}?month=${selectedMonth}&year=${selectedYear}`;
         window.open(url, '_blank');
+    };
+
+    const handleViewSales = async (seller) => {
+        setSelectedSeller(seller);
+        // In a real app, you would fetch the sales data here
+        // For now, we'll use mock data
+        const mockSales = [
+            {
+                id: 1,
+                client_name: seller.name + ' - Cliente 1',
+                total_amount: seller.totalSales * 0.3,
+                shipping_amount: seller.totalShipping * 0.3,
+                received_amount: seller.approvedSales * 0.3,
+                payment_date: new Date(),
+                status: 'aprovado'
+            },
+            {
+                id: 2,
+                client_name: seller.name + ' - Cliente 2',
+                total_amount: seller.totalSales * 0.3,
+                shipping_amount: seller.totalShipping * 0.3,
+                received_amount: seller.approvedSales * 0.3,
+                payment_date: new Date(),
+                status: 'aprovado'
+            },
+            {
+                id: 3,
+                client_name: seller.name + ' - Cliente 3',
+                total_amount: seller.totalSales * 0.4,
+                shipping_amount: seller.totalShipping * 0.4,
+                received_amount: seller.pendingSales,
+                payment_date: new Date(),
+                status: 'pendente'
+            }
+        ];
+        setSelectedSellerSales(mockSales);
+        setModalOpen(true);
     };
 
     return (
@@ -365,31 +406,54 @@ export default function ReportsIndex({ salesData, commissionData, totalStats }) 
                                                         </div>
                                                     </div>
                                                     
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                                        <div className="text-center p-3 bg-blue-50 rounded-lg">
-                                                            <div className="text-lg font-bold text-blue-600">
-                                                                {formatCurrency(seller.totalSales)}
-                                                            </div>
-                                                            <div className="text-sm text-blue-500">Total Vendas</div>
+                                                    {/* 7-Point Information System */}
+                                                    <div className="space-y-3 mb-4">
+                                                        {/* 1. Total Sales */}
+                                                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                                            <span className="text-sm font-medium text-gray-600">1. Total de Vendas</span>
+                                                            <span className="text-lg font-bold text-gray-800">{formatCurrency(seller.totalSales)}</span>
                                                         </div>
-                                                        <div className="text-center p-3 bg-green-50 rounded-lg">
-                                                            <div className="text-lg font-bold text-green-600">
-                                                                {formatCurrency(seller.approvedSales)}
-                                                            </div>
-                                                            <div className="text-sm text-green-500">Aprovadas</div>
+                                                        
+                                                        {/* 2. Approved Sales */}
+                                                        <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                                            <span className="text-sm font-medium text-green-600">2. Vendas Aprovadas</span>
+                                                            <span className="text-lg font-bold text-green-800">{formatCurrency(seller.approvedSales)}</span>
                                                         </div>
-                                                        <div className="text-center p-3 bg-purple-50 rounded-lg">
-                                                            <div className="text-lg font-bold text-purple-600">
-                                                                {formatCurrency(seller.commissionBase)}
-                                                            </div>
-                                                            <div className="text-sm text-purple-500">Base Comissão</div>
+                                                        
+                                                        {/* 3. Pending Sales */}
+                                                        <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                                                            <span className="text-sm font-medium text-yellow-600">3. Vendas Pendentes</span>
+                                                            <span className="text-lg font-bold text-yellow-800">{formatCurrency(seller.pendingSales || 0)}</span>
                                                         </div>
-                                                        <div className="text-center p-3 bg-orange-50 rounded-lg">
-                                                            <div className="text-lg font-bold text-orange-600">
-                                                                {formatCurrency(seller.totalCommission)}
-                                                            </div>
-                                                            <div className="text-sm text-orange-500">Comissão Total</div>
+                                                        
+                                                        {/* 4. Total Shipping */}
+                                                        <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                                                            <span className="text-sm font-medium text-blue-600">4. Total de Frete</span>
+                                                            <span className="text-lg font-bold text-blue-800">{formatCurrency(seller.totalShipping || 0)}</span>
                                                         </div>
+                                                        
+                                                        {/* 5. Commission Base */}
+                                                        <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                                                            <span className="text-sm font-medium text-purple-600">5. Base de Comissão</span>
+                                                            <span className="text-lg font-bold text-purple-800">{formatCurrency(seller.commissionBase)}</span>
+                                                        </div>
+                                                        
+                                                        {/* 6. Total Commission */}
+                                                        <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                                                            <span className="text-sm font-medium text-orange-600">6. Comissão Total ({seller.commissionRate}%)</span>
+                                                            <span className="text-lg font-bold text-orange-800">{formatCurrency(seller.totalCommission)}</span>
+                                                        </div>
+                                                        
+                                                        {/* 7. View All Sales Button */}
+                                                        <button
+                                                            onClick={() => handleViewSales(seller)}
+                                                            className="w-full p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                            </svg>
+                                                            7. Ver Todas as Vendas
+                                                        </button>
                                                     </div>
                                                     
                                                     <div className="mt-4">
@@ -444,6 +508,14 @@ export default function ReportsIndex({ salesData, commissionData, totalStats }) 
                     </div>
                 </div>
             </AuthenticatedLayout>
+            
+            {/* Sales Modal */}
+            <SalesModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                sales={selectedSellerSales}
+                sellerName={selectedSeller?.name || ''}
+            />
         </>
     );
 }

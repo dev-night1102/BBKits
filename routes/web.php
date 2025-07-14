@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\SalePaymentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminReportsController;
 use App\Http\Controllers\ExportController;
@@ -30,24 +31,28 @@ Route::get('/dashboard', function () {
             // Get commission service instance
             $commissionService = app(\App\Services\CommissionService::class);
             
-            // Get real sales data for the user
-            $monthlySalesCount = $user->sales()
+            // Get all sales for calculations
+            $allMonthlySales = $user->sales()
                 ->whereYear('payment_date', $currentYear)
                 ->whereMonth('payment_date', $currentMonth)
-                ->count();
+                ->get();
                 
-            $approvedSalesCount = $user->sales()
-                ->whereYear('payment_date', $currentYear)
-                ->whereMonth('payment_date', $currentMonth)
-                ->where('status', 'aprovado')
-                ->count();
-                
-            $approvedSalesTotal = $user->sales()
-                ->whereYear('payment_date', $currentYear)
-                ->whereMonth('payment_date', $currentMonth)
-                ->where('status', 'aprovado')
-                ->sum('received_amount');
-                
+            $approvedSales = $allMonthlySales->where('status', 'aprovado');
+            $pendingSales = $allMonthlySales->where('status', 'pendente');
+            
+            // Calculate totals
+            $monthlySalesCount = $allMonthlySales->count();
+            $approvedSalesCount = $approvedSales->count();
+            $totalSalesAmount = $allMonthlySales->sum('received_amount');
+            $approvedSalesTotal = $approvedSales->sum('received_amount');
+            $pendingSalesTotal = $pendingSales->sum('received_amount');
+            $totalShipping = $allMonthlySales->sum('shipping_amount');
+            
+            // Calculate commission base
+            $commissionBase = $approvedSales->sum(function ($sale) {
+                return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+            });
+            
             $monthlyCommission = $user->getMonthlyCommissionTotal($currentMonth, $currentYear);
             $monthlySalesTotal = $user->getMonthlySalesTotal($currentMonth, $currentYear);
             
@@ -73,7 +78,11 @@ Route::get('/dashboard', function () {
                 'salesData' => [
                     'monthlySalesCount' => $monthlySalesCount,
                     'approvedSalesCount' => $approvedSalesCount,
+                    'totalSalesAmount' => $totalSalesAmount,
                     'approvedSalesTotal' => $approvedSalesTotal,
+                    'pendingSalesTotal' => $pendingSalesTotal,
+                    'totalShipping' => $totalShipping,
+                    'commissionBase' => $commissionBase,
                     'monthlyCommission' => $monthlyCommission,
                     'monthlySalesTotal' => $monthlySalesTotal,
                     'monthlyGoal' => $monthlyProgress['remaining_to_goal'] + $monthlySalesTotal,
@@ -112,6 +121,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     Route::resource('sales', SaleController::class);
+    
+    // Payment routes
+    Route::get('/sales/{sale}/payments', [SalePaymentController::class, 'index'])->name('payments.index');
+    Route::post('/sales/{sale}/payments', [SalePaymentController::class, 'store'])->name('payments.store');
+    Route::put('/payments/{payment}/approve', [SalePaymentController::class, 'approve'])->name('payments.approve');
+    Route::put('/payments/{payment}/reject', [SalePaymentController::class, 'reject'])->name('payments.reject');
+    Route::delete('/payments/{payment}', [SalePaymentController::class, 'destroy'])->name('payments.destroy');
     
     // Admin routes
     Route::middleware('admin')->group(function () {

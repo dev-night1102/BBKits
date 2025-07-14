@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sale extends Model
 {
@@ -89,5 +90,74 @@ class Sale extends Model
     public function hasReceipt(): bool
     {
         return !empty($this->receipt_data) || !empty($this->payment_receipt);
+    }
+
+    // Payment relationships and methods
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SalePayment::class);
+    }
+
+    public function approvedPayments(): HasMany
+    {
+        return $this->hasMany(SalePayment::class)->where('status', 'approved');
+    }
+
+    public function pendingPayments(): HasMany
+    {
+        return $this->hasMany(SalePayment::class)->where('status', 'pending');
+    }
+
+    public function getTotalPaidAmount(): float
+    {
+        return $this->approvedPayments()->sum('amount');
+    }
+
+    public function getTotalPendingAmount(): float
+    {
+        return $this->pendingPayments()->sum('amount');
+    }
+
+    public function getRemainingAmount(): float
+    {
+        return $this->total_amount - $this->getTotalPaidAmount();
+    }
+
+    public function isFullyPaid(): bool
+    {
+        return $this->getTotalPaidAmount() >= $this->total_amount;
+    }
+
+    public function hasPartialPayments(): bool
+    {
+        return $this->payments()->count() > 0;
+    }
+
+    public function getPaymentProgress(): float
+    {
+        if ($this->total_amount <= 0) {
+            return 0;
+        }
+        return ($this->getTotalPaidAmount() / $this->total_amount) * 100;
+    }
+
+    public function getPaymentStatus(): string
+    {
+        if ($this->isFullyPaid()) {
+            return 'fully_paid';
+        } elseif ($this->getTotalPaidAmount() > 0) {
+            return 'partially_paid';
+        } else {
+            return 'unpaid';
+        }
+    }
+
+    // Override the original commission base calculation for partial payments
+    public function getCommissionBaseAmountForPayments(): float
+    {
+        if (!$this->isFullyPaid()) {
+            return 0; // No commission until fully paid
+        }
+        return $this->getTotalPaidAmount() - $this->shipping_amount;
     }
 }

@@ -70,15 +70,24 @@ class AdminReportsController extends Controller
             ->map(function ($seller) use ($month, $year) {
                 $commissionService = new CommissionService();
                 
-                // Calculate commission base manually to avoid DB::raw issues
-                $commissionBase = Sale::where('user_id', $seller->id)
-                    ->where('status', 'aprovado')
+                // Get all sales for calculations
+                $allSales = Sale::where('user_id', $seller->id)
                     ->whereYear('payment_date', $year)
                     ->whereMonth('payment_date', $month)
-                    ->get()
-                    ->sum(function ($sale) {
-                        return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
-                    });
+                    ->get();
+                
+                $approvedSales = $allSales->where('status', 'aprovado');
+                $pendingSales = $allSales->where('status', 'pendente');
+                
+                // Calculate totals
+                $pendingAmount = $pendingSales->sum('received_amount');
+                $totalShipping = $allSales->sum('shipping_amount');
+                
+                // Calculate commission base manually to avoid DB::raw issues
+                $commissionBase = $approvedSales->sum(function ($sale) {
+                    return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+                });
+                
                 $commission = $this->calculateCommissionForSeller($seller->id, $month, $year);
                 
                 return [
@@ -89,6 +98,8 @@ class AdminReportsController extends Controller
                     'approvedSalesCount' => $seller->approved_sales_count,
                     'totalSales' => $seller->total_amount ?: 0,
                     'approvedSales' => $seller->approved_amount ?: 0,
+                    'pendingSales' => $pendingAmount,
+                    'totalShipping' => $totalShipping,
                     'commissionBase' => $commissionBase,
                     'totalCommission' => $commission,
                     'commissionRate' => $commissionService->calculateCommissionRate($commissionBase),

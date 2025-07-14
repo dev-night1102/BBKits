@@ -145,8 +145,16 @@ class GamificationService
                     ->where('status', 'aprovado')
                     ->whereYear('payment_date', Carbon::now()->year)
                     ->whereMonth('payment_date', Carbon::now()->month)
+                    ->with('payments')
                     ->get()
+                    ->filter(function ($sale) {
+                        // Only include fully paid sales for commission calculation
+                        return $sale->hasPartialPayments() ? $sale->isFullyPaid() : true;
+                    })
                     ->sum(function ($sale) {
+                        if ($sale->hasPartialPayments()) {
+                            return $sale->getCommissionBaseAmountForPayments();
+                        }
                         return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
                     });
                 
@@ -160,13 +168,17 @@ class GamificationService
             ->values()
             ->map(function ($user, $index) {
                 $level = $this->getUserLevel($user);
+                $position = $index + 1;
+                
                 return [
-                    'position' => $index + 1,
+                    'position' => $position,
                     'user' => $user,
                     'monthly_total' => $user->monthly_total,
                     'monthly_sales_count' => $user->monthly_sales_count ?? 0,
                     'level' => $level,
-                    'badge' => $this->getPositionBadge($index + 1)
+                    'badge' => $this->getPositionBadge($position),
+                    'motivational_message' => $this->getPositionMotivationalMessage($position, $user->monthly_total),
+                    'turnaround_alert' => $this->getTurnaroundAlert($user, $position, $users->toArray())
                 ];
             });
 
@@ -251,13 +263,153 @@ class GamificationService
     {
         switch ($position) {
             case 1:
-                return ['icon' => '🥇', 'color' => 'text-yellow-500', 'name' => 'Ouro'];
+                return [
+                    'icon' => '🥇',
+                    'color' => 'text-yellow-500',
+                    'bg_color' => 'bg-yellow-50',
+                    'border_color' => 'border-yellow-300',
+                    'gradient' => 'from-yellow-400 to-yellow-600',
+                    'name' => '1º Lugar',
+                    'title' => 'Campeã do Mês! 👑'
+                ];
             case 2:
-                return ['icon' => '🥈', 'color' => 'text-gray-400', 'name' => 'Prata'];
+                return [
+                    'icon' => '🥈',
+                    'color' => 'text-gray-500',
+                    'bg_color' => 'bg-gray-50',
+                    'border_color' => 'border-gray-300',
+                    'gradient' => 'from-gray-400 to-gray-600',
+                    'name' => '2º Lugar',
+                    'title' => 'Vice-Campeã! 🌟'
+                ];
             case 3:
-                return ['icon' => '🥉', 'color' => 'text-orange-600', 'name' => 'Bronze'];
+                return [
+                    'icon' => '🥉',
+                    'color' => 'text-orange-600',
+                    'bg_color' => 'bg-orange-50',
+                    'border_color' => 'border-orange-300',
+                    'gradient' => 'from-orange-400 to-orange-600',
+                    'name' => '3º Lugar',
+                    'title' => 'Terceiro Lugar! 🎉'
+                ];
             default:
-                return ['icon' => '🏅', 'color' => 'text-blue-500', 'name' => 'Top ' . $position];
+                return [
+                    'icon' => '🏅',
+                    'color' => 'text-blue-500',
+                    'bg_color' => 'bg-blue-50',
+                    'border_color' => 'border-blue-300',
+                    'gradient' => 'from-blue-400 to-blue-600',
+                    'name' => $position . 'º Lugar',
+                    'title' => 'Top ' . $position . '! 💪'
+                ];
         }
+    }
+
+    private function getPositionMotivationalMessage(int $position, float $monthlyTotal): array
+    {
+        switch ($position) {
+            case 1:
+                return [
+                    'type' => 'champion',
+                    'title' => '🏆 Vendedora Campeã BBKits!',
+                    'message' => 'Parabéns! Você está liderando o ranking e inspirando toda a equipe com seu desempenho excepcional!',
+                    'emoji' => '👑',
+                    'color' => 'text-yellow-600',
+                    'bg_color' => 'bg-gradient-to-r from-yellow-400 to-yellow-600'
+                ];
+            case 2:
+                return [
+                    'type' => 'vice_champion',
+                    'title' => '🌟 Vice-Campeã BBKits!',
+                    'message' => 'Excelente trabalho! Você está entre as melhores e muito próxima da liderança!',
+                    'emoji' => '🥈',
+                    'color' => 'text-gray-600',
+                    'bg_color' => 'bg-gradient-to-r from-gray-400 to-gray-600'
+                ];
+            case 3:
+                return [
+                    'type' => 'third_place',
+                    'title' => '🎉 Terceiro Lugar BBKits!',
+                    'message' => 'Ótimo desempenho! Você está no pódio e tem potencial para subir ainda mais!',
+                    'emoji' => '🥉',
+                    'color' => 'text-orange-600',
+                    'bg_color' => 'bg-gradient-to-r from-orange-400 to-orange-600'
+                ];
+            default:
+                if ($monthlyTotal < 10000) {
+                    return [
+                        'type' => 'encouragement',
+                        'title' => '🚀 Você é capaz de virar o jogo!',
+                        'message' => 'Cada grande vendedora começou do zero. Sua dedicação e persistência vão te levar ao topo! Continue firme!',
+                        'emoji' => '💪',
+                        'color' => 'text-purple-600',
+                        'bg_color' => 'bg-gradient-to-r from-purple-400 to-pink-500'
+                    ];
+                } else {
+                    return [
+                        'type' => 'growth',
+                        'title' => '📈 Vendedora em Ascensão!',
+                        'message' => 'Você está construindo um ótimo resultado! Continue assim e logo estará no pódio!',
+                        'emoji' => '🌟',
+                        'color' => 'text-indigo-600',
+                        'bg_color' => 'bg-gradient-to-r from-indigo-400 to-purple-600'
+                    ];
+                }
+        }
+    }
+
+    private function getTurnaroundAlert(User $user, int $position, array $allUsers): ?array
+    {
+        if ($position === 1) {
+            return null; // First place doesn't need turnaround alerts
+        }
+
+        $currentTotal = $user->monthly_total;
+        $targetPosition = $position - 1;
+        
+        // Find the user in the target position
+        $targetUser = collect($allUsers)->firstWhere('position', $targetPosition);
+        
+        if (!$targetUser) {
+            return null;
+        }
+
+        $targetTotal = $targetUser['monthly_total'];
+        $amountNeeded = $targetTotal - $currentTotal + 1; // +1 to actually overtake
+        
+        if ($amountNeeded <= 0) {
+            return null;
+        }
+
+        $positionNames = [
+            1 => '1º lugar',
+            2 => '2º lugar',
+            3 => '3º lugar'
+        ];
+
+        $targetName = $positionNames[$targetPosition] ?? ($targetPosition . 'º lugar');
+        $encouragementMessages = [
+            2 => 'Você está quase lá! A liderança está ao seu alcance!',
+            3 => 'O pódio está esperando por você! Vamos conquistar!',
+            4 => 'Mais uma posição e você estará no pódio!',
+        ];
+
+        return [
+            'show' => true,
+            'type' => 'turnaround',
+            'target_position' => $targetPosition,
+            'target_position_name' => $targetName,
+            'current_position' => $position,
+            'amount_needed' => $amountNeeded,
+            'target_total' => $targetTotal,
+            'current_total' => $currentTotal,
+            'title' => "🎯 Oportunidade de Ultrapassagem!",
+            'message' => "Você está a apenas R$ " . number_format($amountNeeded, 2, ',', '.') . " de ultrapassar o {$targetName}!",
+            'encouragement' => $encouragementMessages[$targetPosition] ?? 'Continue assim! Você pode subir mais uma posição!',
+            'icon' => '🏃‍♀️',
+            'color' => 'text-green-600',
+            'bg_color' => 'bg-green-50',
+            'border_color' => 'border-green-300'
+        ];
     }
 }
