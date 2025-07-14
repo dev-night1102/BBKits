@@ -80,10 +80,22 @@ class User extends Authenticatable
 
     public function getMonthlyCommissionTotal(int $month, int $year): float
     {
-        return $this->commissions()
-            ->where('month', $month)
-            ->where('year', $year)
-            ->sum('commission_amount');
+        // Calculate commission dynamically using the same logic as admin reports
+        $commissionService = app(\App\Services\CommissionService::class);
+        
+        // Get commission base for the month
+        $commissionBase = $this->sales()
+            ->where('status', 'aprovado')
+            ->whereYear('payment_date', $year)
+            ->whereMonth('payment_date', $month)
+            ->get()
+            ->sum(function ($sale) {
+                return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+            });
+        
+        // Calculate commission rate and amount
+        $rate = $commissionService->calculateCommissionRate($commissionBase);
+        return $commissionBase * ($rate / 100);
     }
 
     public function getMonthlySalesTotal(int $month, int $year): float

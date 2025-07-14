@@ -133,24 +133,35 @@ class CommissionService
     {
         $monthlyTotal = $user->getMonthlySalesTotal($month, $year);
         $commission = $user->getMonthlyCommissionTotal($month, $year);
-        $progress = ($monthlyTotal / self::INDIVIDUAL_MINIMUM) * 100;
+        
+        // Calculate commission base for accurate rate calculation
+        $commissionBase = $user->sales()
+            ->where('status', 'aprovado')
+            ->whereYear('payment_date', $year)
+            ->whereMonth('payment_date', $month)
+            ->get()
+            ->sum(function ($sale) {
+                return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+            });
+        
+        $progress = ($commissionBase / self::INDIVIDUAL_MINIMUM) * 100;
 
-        // Get next bracket info
-        $nextBracket = $this->getNextCommissionBracket($monthlyTotal);
+        // Get next bracket info using commission base
+        $nextBracket = $this->getNextCommissionBracket($commissionBase);
         
         // Calculate potential earnings for different scenarios
         $potentialEarnings = null;
         if ($nextBracket) {
             $potentialEarnings = $this->calculatePotentialEarnings(
-                $monthlyTotal, 
+                $commissionBase, 
                 $nextBracket['amount_needed']
             );
         }
 
         // Get opportunity alert
         $opportunityAlert = null;
-        if ($monthlyTotal < self::INDIVIDUAL_MINIMUM) {
-            $amountNeeded = self::INDIVIDUAL_MINIMUM - $monthlyTotal;
+        if ($commissionBase < self::INDIVIDUAL_MINIMUM) {
+            $amountNeeded = self::INDIVIDUAL_MINIMUM - $commissionBase;
             $minimumRate = $this->calculateCommissionRate(self::INDIVIDUAL_MINIMUM);
             $potentialCommission = self::INDIVIDUAL_MINIMUM * ($minimumRate / 100);
             $opportunityAlert = [
@@ -167,8 +178,8 @@ class CommissionService
             'monthly_total' => $monthlyTotal,
             'commission_total' => $commission,
             'progress_percentage' => min($progress, 100),
-            'remaining_to_goal' => max(self::INDIVIDUAL_MINIMUM - $monthlyTotal, 0),
-            'current_rate' => $this->calculateCommissionRate($monthlyTotal),
+            'remaining_to_goal' => max(self::INDIVIDUAL_MINIMUM - $commissionBase, 0),
+            'current_rate' => $this->calculateCommissionRate($commissionBase),
             'next_bracket' => $nextBracket,
             'potential_earnings' => $potentialEarnings,
             'opportunity_alert' => $opportunityAlert,
