@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use App\Services\PDFReportService;
+use App\Services\CommissionService;
 
 class AdminController extends Controller
 {
@@ -18,92 +19,75 @@ class AdminController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        $currentMonth = Carbon::now()->format('Y-m');
+        $commissionService = new CommissionService();
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
         
         // Basic stats
         $stats = [
             'totalSellers' => User::where('role', 'vendedora')->count(),
             'monthlyRevenue' => Sale::where('status', 'aprovado')
-                ->whereYear('payment_date', Carbon::now()->year)
-                ->whereMonth('payment_date', Carbon::now()->month)
+                ->whereYear('payment_date', $currentYear)
+                ->whereMonth('payment_date', $currentMonth)
                 ->sum('received_amount'),
             'pendingSales' => Sale::where('status', 'pendente')->count(),
             'approvedSales' => Sale::where('status', 'aprovado')
-                ->whereYear('payment_date', Carbon::now()->year)
-                ->whereMonth('payment_date', Carbon::now()->month)
+                ->whereYear('payment_date', $currentYear)
+                ->whereMonth('payment_date', $currentMonth)
                 ->count(),
-            'totalSalesCount' => Sale::whereYear('payment_date', Carbon::now()->year)
-                ->whereMonth('payment_date', Carbon::now()->month)
+            'totalSalesCount' => Sale::whereYear('payment_date', $currentYear)
+                ->whereMonth('payment_date', $currentMonth)
                 ->count(),
             'monthlyTarget' => 200000, // R$ 200k monthly target
         ];
 
-        // Calculate monthly commissions
-        $monthlyCommissions = Sale::where('status', 'aprovado')
-            ->whereYear('payment_date', Carbon::now()->year)
-            ->whereMonth('payment_date', Carbon::now()->month)
-            ->get()
-            ->sum(function ($sale) {
-                $commissionBase = $sale->received_amount - $sale->shipping_amount;
-                
-                // Get seller's monthly total for commission calculation
-                $sellerMonthlyTotal = Sale::where('user_id', $sale->user_id)
-                    ->where('status', 'aprovado')
-                    ->whereYear('payment_date', Carbon::now()->year)
-                    ->whereMonth('payment_date', Carbon::now()->month)
-                    ->sum(DB::raw('received_amount - shipping_amount'));
-                
-                // Commission tiers based on monthly total
-                if ($sellerMonthlyTotal >= 60000) {
-                    return $commissionBase * 0.04; // 4%
-                } elseif ($sellerMonthlyTotal >= 50000) {
-                    return $commissionBase * 0.03; // 3%
-                } elseif ($sellerMonthlyTotal >= 40000) {
-                    return $commissionBase * 0.02; // 2%
-                }
-                
-                return 0; // No commission if below R$40k
-            });
+        // Calculate monthly commissions using CommissionService
+        $monthlyCommissions = 0;
+        $sellers = User::where('role', 'vendedora')->get();
+        
+        foreach ($sellers as $seller) {
+            $sellerMonthlyTotal = Sale::where('user_id', $seller->id)
+                ->where('status', 'aprovado')
+                ->whereYear('payment_date', $currentYear)
+                ->whereMonth('payment_date', $currentMonth)
+                ->sum(DB::raw('received_amount - shipping_amount'));
+            
+            $commissionRate = $commissionService->calculateCommissionRate($sellerMonthlyTotal);
+            $monthlyCommissions += $sellerMonthlyTotal * ($commissionRate / 100);
+        }
 
         $stats['monthlyCommissions'] = $monthlyCommissions;
 
         // Top performers this month
         $topPerformers = User::where('role', 'vendedora')
             ->withCount([
-                'sales as sales_count' => function ($query) {
+                'sales as sales_count' => function ($query) use ($currentYear, $currentMonth) {
                     $query->where('status', 'aprovado')
-                        ->whereYear('payment_date', Carbon::now()->year)
-                        ->whereMonth('payment_date', Carbon::now()->month);
+                        ->whereYear('payment_date', $currentYear)
+                        ->whereMonth('payment_date', $currentMonth);
                 }
             ])
             ->withSum([
-                'sales as total_revenue' => function ($query) {
+                'sales as total_revenue' => function ($query) use ($currentYear, $currentMonth) {
                     $query->where('status', 'aprovado')
-                        ->whereYear('payment_date', Carbon::now()->year)
-                        ->whereMonth('payment_date', Carbon::now()->month);
+                        ->whereYear('payment_date', $currentYear)
+                        ->whereMonth('payment_date', $currentMonth);
                 }
             ], 'received_amount')
             // ->having('sales_count', '>', 0)
             ->orderBy('total_revenue', 'desc')
             ->limit(5)
             ->get()
-            ->map(function ($user) {
-                // Calculate commission for each top performer
+            ->map(function ($user) use ($commissionService, $currentYear, $currentMonth) {
+                // Calculate commission for each top performer using CommissionService
                 $commissionBase = Sale::where('user_id', $user->id)
                     ->where('status', 'aprovado')
-                    ->whereYear('payment_date', Carbon::now()->year)
-                    ->whereMonth('payment_date', Carbon::now()->month)
+                    ->whereYear('payment_date', $currentYear)
+                    ->whereMonth('payment_date', $currentMonth)
                     ->sum(DB::raw('received_amount - shipping_amount'));
                 
-                if ($commissionBase >= 60000) {
-                    $commission = $commissionBase * 0.04;
-                } elseif ($commissionBase >= 50000) {
-                    $commission = $commissionBase * 0.03;
-                } elseif ($commissionBase >= 40000) {
-                    $commission = $commissionBase * 0.02;
-                } else {
-                    $commission = 0;
-                }
+                $commissionRate = $commissionService->calculateCommissionRate($commissionBase);
+                $commission = $commissionBase * ($commissionRate / 100);
                 
                 $user->total_commission = $commission;
                 return $user;

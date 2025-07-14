@@ -46,7 +46,7 @@ Route::get('/dashboard', function () {
                 ->whereYear('payment_date', $currentYear)
                 ->whereMonth('payment_date', $currentMonth)
                 ->where('status', 'aprovado')
-                ->sum('total_amount');
+                ->sum('received_amount');
                 
             $monthlyCommission = $user->getMonthlyCommissionTotal($currentMonth, $currentYear);
             $monthlySalesTotal = $user->getMonthlySalesTotal($currentMonth, $currentYear);

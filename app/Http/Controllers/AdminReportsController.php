@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Services\CommissionService;
 
 class AdminReportsController extends Controller
 {
@@ -57,7 +58,7 @@ class AdminReportsController extends Controller
                     $query->whereYear('payment_date', $year)
                         ->whereMonth('payment_date', $month);
                 }
-            ], 'total_amount')
+            ], 'received_amount')
             ->withSum([
                 'sales as approved_amount' => function ($query) use ($month, $year) {
                     $query->where('status', 'aprovado')
@@ -74,6 +75,7 @@ class AdminReportsController extends Controller
             ], DB::raw('received_amount - shipping_amount'))
             ->get()
             ->map(function ($seller) use ($month, $year) {
+                $commissionService = new CommissionService();
                 $commissionBase = $seller->commission_base ?: 0;
                 $commission = $this->calculateCommissionForSeller($seller->id, $month, $year);
                 
@@ -87,9 +89,9 @@ class AdminReportsController extends Controller
                     'approvedSales' => $seller->approved_amount ?: 0,
                     'commissionBase' => $commissionBase,
                     'totalCommission' => $commission,
-                    'commissionRate' => $this->getCommissionRate($commissionBase),
+                    'commissionRate' => $commissionService->calculateCommissionRate($commissionBase),
                     'level' => $this->getPerformanceLevel($commissionBase),
-                    'metaAchieved' => $commissionBase >= 40000
+                    'metaAchieved' => $commissionService->calculateCommissionRate($commissionBase) > 0
                 ];
             });
 
@@ -161,7 +163,8 @@ class AdminReportsController extends Controller
                     ->whereYear('payment_date', $year)
                     ->whereMonth('payment_date', $month)
                     ->sum(DB::raw('received_amount - shipping_amount'));
-                return $totalBase >= 40000;
+                $commissionService = new CommissionService();
+                return $commissionService->calculateCommissionRate($totalBase) > 0;
             })
             ->count();
 
@@ -177,6 +180,8 @@ class AdminReportsController extends Controller
 
     private function calculateCommissionForSeller($sellerId, $month, $year)
     {
+        $commissionService = new CommissionService();
+        
         $sellerSales = Sale::where('user_id', $sellerId)
             ->where('status', 'aprovado')
             ->whereYear('payment_date', $year)
@@ -187,7 +192,7 @@ class AdminReportsController extends Controller
             return $sale->received_amount - $sale->shipping_amount;
         });
 
-        $rate = $this->getCommissionRate($totalBase);
+        $rate = $commissionService->calculateCommissionRate($totalBase);
         
         return $totalBase * ($rate / 100);
     }
@@ -198,6 +203,7 @@ class AdminReportsController extends Controller
             return 0;
         }
 
+        $commissionService = new CommissionService();
         $commissionBase = $sale->received_amount - $sale->shipping_amount;
         
         // Get seller's monthly total for commission calculation
@@ -208,38 +214,28 @@ class AdminReportsController extends Controller
             ->whereMonth('payment_date', $paymentDate->month)
             ->sum(DB::raw('received_amount - shipping_amount'));
         
-        // Commission tiers based on monthly total
-        if ($sellerMonthlyTotal >= 60000) {
-            return $commissionBase * 0.04; // 4%
-        } elseif ($sellerMonthlyTotal >= 50000) {
-            return $commissionBase * 0.03; // 3%
-        } elseif ($sellerMonthlyTotal >= 40000) {
-            return $commissionBase * 0.02; // 2%
-        }
+        // Use CommissionService for rate calculation
+        $rate = $commissionService->calculateCommissionRate($sellerMonthlyTotal);
         
-        return 0; // No commission if below R$40k
+        return $commissionBase * ($rate / 100);
     }
 
     private function getCommissionRate($totalBase)
     {
-        if ($totalBase >= 60000) {
-            return 4;
-        } elseif ($totalBase >= 50000) {
-            return 3;
-        } elseif ($totalBase >= 40000) {
-            return 2;
-        }
-        
-        return 0;
+        $commissionService = new CommissionService();
+        return $commissionService->calculateCommissionRate($totalBase);
     }
 
     private function getPerformanceLevel($totalBase)
     {
-        if ($totalBase >= 60000) {
+        $commissionService = new CommissionService();
+        $rate = $commissionService->calculateCommissionRate($totalBase);
+        
+        if ($rate >= 4) {
             return 'Elite';
-        } elseif ($totalBase >= 50000) {
+        } elseif ($rate >= 3) {
             return 'Avançada';
-        } elseif ($totalBase >= 40000) {
+        } elseif ($rate >= 2) {
             return 'Intermediária';
         }
         

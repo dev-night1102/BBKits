@@ -190,10 +190,17 @@
     <div class="tier-info">
         <h4>📊 Tabela de Comissões BBKits</h4>
         <div class="tier-list">
-            <div>• <strong>0% comissão:</strong> Base inferior a R$ 40.000</div>
-            <div>• <strong>2% comissão:</strong> Base entre R$ 40.000 e R$ 49.999</div>
-            <div>• <strong>3% comissão:</strong> Base entre R$ 50.000 e R$ 59.999</div>
-            <div>• <strong>4% comissão:</strong> Base igual ou superior a R$ 60.000</div>
+            <div>• <strong>0% comissão:</strong> Base inferior a R$ {{ number_format($commission_ranges->first()->min_amount ?? 40000, 0, ',', '.') }}</div>
+            @foreach($commission_ranges as $range)
+                <div>• <strong>{{ $range->percentage }}% comissão:</strong> 
+                    Base 
+                    @if($range->max_amount)
+                        entre R$ {{ number_format($range->min_amount, 0, ',', '.') }} e R$ {{ number_format($range->max_amount, 0, ',', '.') }}
+                    @else
+                        igual ou superior a R$ {{ number_format($range->min_amount, 0, ',', '.') }}
+                    @endif
+                </div>
+            @endforeach
         </div>
     </div>
 
@@ -235,7 +242,7 @@
     @else
     <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px;">
         <p style="color: #666; font-size: 14px;">Nenhuma venda comissionável encontrada para o período selecionado.</p>
-        <p style="color: #888; font-size: 12px;">Lembre-se: Para gerar comissões, é necessário atingir pelo menos R$ 40.000 em vendas aprovadas no mês.</p>
+        <p style="color: #888; font-size: 12px;">Lembre-se: Para gerar comissões, é necessário atingir pelo menos R$ {{ number_format($commission_ranges->first()->min_amount ?? 40000, 0, ',', '.') }} em vendas aprovadas no mês.</p>
     </div>
     @endif
 

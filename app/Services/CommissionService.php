@@ -151,7 +151,8 @@ class CommissionService
         $opportunityAlert = null;
         if ($monthlyTotal < self::INDIVIDUAL_MINIMUM) {
             $amountNeeded = self::INDIVIDUAL_MINIMUM - $monthlyTotal;
-            $potentialCommission = self::INDIVIDUAL_MINIMUM * 0.02; // 2% minimum
+            $minimumRate = $this->calculateCommissionRate(self::INDIVIDUAL_MINIMUM);
+            $potentialCommission = self::INDIVIDUAL_MINIMUM * ($minimumRate / 100);
             $opportunityAlert = [
                 'message' => "Se você atingir R$ " . number_format(self::INDIVIDUAL_MINIMUM, 2, ',', '.') . 
                            " até o final do mês, você poderá ganhar R$ " . 

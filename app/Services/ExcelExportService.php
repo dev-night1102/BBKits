@@ -6,6 +6,7 @@ use App\Models\Sale;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Services\CommissionService;
 
 class ExcelExportService
 {
@@ -63,7 +64,7 @@ class ExcelExportService
         $vendedoras = User::where('role', 'vendedora')->get();
         foreach ($vendedoras as $vendedora) {
             $vendedoraSales = $sales->where('user_id', $vendedora->id);
-            $totalVendido = $vendedoraSales->sum('total_amount');
+            $totalVendido = $vendedoraSales->sum('received_amount');
             $totalAprovado = $vendedoraSales->where('status', 'aprovado')->sum('received_amount');
             $totalComissao = $vendedoraSales->where('status', 'aprovado')->sum(function ($sale) {
                 return $this->calculateCommission($sale);
@@ -178,16 +179,11 @@ class ExcelExportService
             ->whereMonth('payment_date', $sale->payment_date->month)
             ->sum(DB::raw('received_amount - shipping_amount'));
         
-        // Commission tiers based on monthly total
-        if ($sellerMonthlyTotal >= 60000) {
-            return $commissionBase * 0.04; // 4%
-        } elseif ($sellerMonthlyTotal >= 50000) {
-            return $commissionBase * 0.03; // 3%
-        } elseif ($sellerMonthlyTotal >= 40000) {
-            return $commissionBase * 0.02; // 2%
-        }
+        // Use CommissionService for rate calculation
+        $commissionService = new CommissionService();
+        $rate = $commissionService->calculateCommissionRate($sellerMonthlyTotal);
         
-        return 0; // No commission if below R$40k
+        return $commissionBase * ($rate / 100);
     }
 
     private function getCommissionTier($total)

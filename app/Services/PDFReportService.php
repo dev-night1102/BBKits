@@ -7,6 +7,7 @@ use App\Models\Sale;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\CommissionService;
 
 class PDFReportService
 {
@@ -90,12 +91,16 @@ class PDFReportService
 
         $totalCommission = $this->calculateCommission($user, $month, $year);
 
+        $commissionService = new CommissionService();
+        $commissionRanges = $commissionService->getCommissionRanges();
+        
         $data = [
             'user' => $user,
             'commission_details' => $commissionDetails,
             'total_commission_base' => $totalCommissionBase,
             'total_commission' => $totalCommission,
             'commission_rate' => $this->getCommissionRate($totalCommissionBase),
+            'commission_ranges' => $commissionRanges,
             'month_name' => $monthName,
             'generated_at' => now()->format('d/m/Y H:i'),
         ];
@@ -186,15 +191,8 @@ class PDFReportService
 
     private function getCommissionRate(float $commissionBase): float
     {
-        if ($commissionBase >= 60000) {
-            return 0.04; // 4%
-        } elseif ($commissionBase >= 50000) {
-            return 0.03; // 3%
-        } elseif ($commissionBase >= 40000) {
-            return 0.02; // 2%
-        }
-        
-        return 0; // No commission below R$40k
+        $commissionService = new CommissionService();
+        return $commissionService->calculateCommissionRate($commissionBase) / 100;
     }
 
     private function getPerformanceLevel(float $revenue): string

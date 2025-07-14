@@ -233,8 +233,20 @@
                 <td>{{ $seller->email }}</td>
                 <td class="center">
                     @php
-                        $levelClass = 'level-' . strtolower(str_replace(['ã', 'á'], ['a', 'a'], $seller->commission_rate >= 0.04 ? 'elite' : ($seller->commission_rate >= 0.03 ? 'avancada' : ($seller->commission_rate >= 0.02 ? 'intermediaria' : 'iniciante'))));
-                        $levelText = $seller->commission_rate >= 0.04 ? 'Elite' : ($seller->commission_rate >= 0.03 ? 'Avançada' : ($seller->commission_rate >= 0.02 ? 'Intermediária' : 'Iniciante'));
+                        $rate = $seller->commission_rate * 100; // Convert to percentage
+                        if ($rate >= 4) {
+                            $levelClass = 'level-elite';
+                            $levelText = 'Elite';
+                        } elseif ($rate >= 3) {
+                            $levelClass = 'level-avancada';
+                            $levelText = 'Avançada';
+                        } elseif ($rate >= 2) {
+                            $levelClass = 'level-intermediaria';
+                            $levelText = 'Intermediária';
+                        } else {
+                            $levelClass = 'level-iniciante';
+                            $levelText = 'Iniciante';
+                        }
                     @endphp
                     <span class="level-badge {{ $levelClass }}">{{ $levelText }}</span>
                 </td>
