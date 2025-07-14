@@ -3,131 +3,343 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sale;
-use App\Models\SalePayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use App\Services\PDFReportService;
+use App\Services\NotificationService;
+use App\Services\CommissionService;
+use App\Jobs\ProcessSaleApproval;
 
-class SalePaymentController extends Controller
+class SaleController extends Controller
 {
-    public function index(Sale $sale)
+    protected $notificationService;
+    protected $commissionService;
+
+    public function __construct(NotificationService $notificationService, CommissionService $commissionService)
     {
-        $payments = $sale->payments()->with('approvedBy')->orderBy('payment_date', 'desc')->get();
-        
-        return Inertia::render('Sales/Payments/Index', [
-            'sale' => $sale,
-            'payments' => $payments,
-            'paymentSummary' => [
-                'total_amount' => $sale->total_amount,
-                'paid_amount' => $sale->getTotalPaidAmount(),
-                'pending_amount' => $sale->getTotalPendingAmount(),
-                'remaining_amount' => $sale->getRemainingAmount(),
-                'progress' => $sale->getPaymentProgress(),
-                'status' => $sale->getPaymentStatus(),
-            ]
+        $this->notificationService = $notificationService;
+        $this->commissionService = $commissionService;
+    }
+
+    public function index()
+    {
+        $sales = Sale::with('user')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->paginate(10);
+
+        return Inertia::render('Sales/Index', [
+            'sales' => $sales
         ]);
     }
 
-    public function store(Request $request, Sale $sale)
+    public function create()
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:0.01',
+        return Inertia::render('Sales/Create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'client_name' => 'required|string|max:255',
+            'total_amount' => 'required|numeric|min:0',
+            'shipping_amount' => 'required|numeric|min:0',
+            'payment_method' => 'required|in:pix,boleto,cartao,dinheiro',
+            'received_amount' => 'required|numeric|min:0',
             'payment_date' => 'required|date',
-            'payment_method' => 'required|string|max:255',
-            'receipt' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120', // 5MB max
-            'notes' => 'nullable|string|max:1000',
+            'payment_receipt' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'notes' => 'nullable|string'
         ]);
 
-        // Check if payment amount doesn't exceed remaining amount
-        $remainingAmount = $sale->getRemainingAmount();
-        if ($request->amount > $remainingAmount) {
-            return back()->withErrors([
-                'amount' => "O valor do pagamento (R$ {$request->amount}) não pode ser maior que o valor restante (R$ {$remainingAmount})"
-            ]);
+        if ($request->hasFile('payment_receipt')) {
+            $file = $request->file('payment_receipt');
+            $fileContent = file_get_contents($file->getRealPath());
+            $mimeType = $file->getMimeType();
+            
+            // Store as base64 data URL
+            $validated['receipt_data'] = 'data:' . $mimeType . ';base64,' . base64_encode($fileContent);
+            
+            // Still store the file path for backward compatibility
+            $validated['payment_receipt'] = $request->file('payment_receipt')->store('receipts', 'public');
         }
 
-        // Store receipt file
-        $receiptPath = null;
-        if ($request->hasFile('receipt')) {
-            $receiptPath = $request->file('receipt')->store('payment-receipts', 'public');
-        }
+        $validated['user_id'] = auth()->id();
+        $validated['status'] = 'pendente';
 
-        // Create payment record
-        SalePayment::create([
-            'sale_id' => $sale->id,
-            'amount' => $request->amount,
-            'payment_date' => $request->payment_date,
-            'payment_method' => $request->payment_method,
-            'receipt_path' => $receiptPath,
-            'notes' => $request->notes,
-            'status' => 'pending',
-        ]);
+        $sale = Sale::create($validated);
+        
+        $this->notificationService->notifyNewSale($sale);
 
-        return back()->with('success', 'Pagamento registrado com sucesso e enviado para aprovação.');
+        return redirect()->route('sales.index')->with('message', 'Venda registrada com sucesso!');
     }
 
-    public function approve(SalePayment $payment)
+    public function show(Sale $sale)
     {
-        if (!auth()->user()->isAdmin()) {
-            return back()->withErrors(['error' => 'Apenas administradores podem aprovar pagamentos.']);
-        }
+        $this->authorize('view', $sale);
+        
+        return Inertia::render('Sales/Show', [
+            'sale' => $sale->load(['user', 'approvedBy', 'rejectedBy'])
+        ]);
+    }
 
-        $payment->update([
-            'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
+    public function edit(Sale $sale)
+    {
+        $this->authorize('update', $sale);
+
+        return Inertia::render('Sales/Edit', [
+            'sale' => $sale
+        ]);
+    }
+
+    public function update(Request $request, Sale $sale)
+    {
+        $this->authorize('update', $sale);
+
+        $validated = $request->validate([
+            'client_name' => 'required|string|max:255',
+            'total_amount' => 'required|numeric|min:0',
+            'shipping_amount' => 'required|numeric|min:0',
+            'payment_method' => 'required|in:pix,boleto,cartao,dinheiro',
+            'received_amount' => 'required|numeric|min:0',
+            'payment_date' => 'required|date',
+            'payment_receipt' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'notes' => 'nullable|string'
         ]);
 
-        // Check if sale is now fully paid and update sale status
-        $sale = $payment->sale;
-        if ($sale->isFullyPaid()) {
+        if ($request->hasFile('payment_receipt')) {
+            $file = $request->file('payment_receipt');
+            $fileContent = file_get_contents($file->getRealPath());
+            $mimeType = $file->getMimeType();
+            
+            // Store as base64 data URL
+            $validated['receipt_data'] = 'data:' . $mimeType . ';base64,' . base64_encode($fileContent);
+            
+            // Delete old file if exists
+            if ($sale->payment_receipt) {
+                Storage::disk('public')->delete($sale->payment_receipt);
+            }
+            
+            // Still store the file path for backward compatibility
+            $validated['payment_receipt'] = $request->file('payment_receipt')->store('receipts', 'public');
+        }
+
+        $sale->update($validated);
+
+        return redirect()->route('sales.index')->with('message', 'Venda atualizada com sucesso!');
+    }
+
+    public function destroy(Sale $sale)
+    {
+        $this->authorize('delete', $sale);
+
+        if ($sale->payment_receipt) {
+            Storage::disk('public')->delete($sale->payment_receipt);
+        }
+
+        $sale->delete();
+
+        return redirect()->route('sales.index')->with('message', 'Venda excluída com sucesso!');
+    }
+    
+    // Admin methods
+    public function adminIndex()
+    {
+        if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'financeiro') {
+            abort(403, 'Unauthorized');
+        }
+        
+        $sales = Sale::with(['user', 'approvedBy', 'rejectedBy'])
+            ->latest()
+            ->paginate(15);
+
+        return Inertia::render('Admin/Sales/Index', [
+            'sales' => $sales
+        ]);
+    }
+    
+    public function approve(Sale $sale)
+    {
+        if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'financeiro') {
+            abort(403, 'Unauthorized');
+        }
+        
+        try {
+            DB::beginTransaction();
+            
+            // Verify sale is still pending
+            if ($sale->status !== 'pendente') {
+                throw new \Exception('Sale is no longer pending approval');
+            }
+            
             $sale->update([
                 'status' => 'aprovado',
                 'approved_by' => auth()->id(),
-                'approved_at' => now(),
+                'approved_at' => now()
             ]);
+            
+            // Create commission record
+            $commission = $this->commissionService->createCommissionForSale($sale->fresh());
+            
+            DB::commit();
+            
+            Log::info('Sale approved successfully', [
+                'sale_id' => $sale->id,
+                'approved_by' => auth()->id(),
+                'commission_created' => $commission ? $commission->id : null
+            ]);
+            
+            $this->notificationService->notifySaleApproved($sale);
+            
+            return back()->with('message', 'Venda aprovada com sucesso!');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to approve sale', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id()
+            ]);
+            
+            return back()->withErrors(['error' => 'Erro ao aprovar venda. Tente novamente.']);
         }
-
-        return back()->with('success', 'Pagamento aprovado com sucesso.');
     }
-
-    public function reject(Request $request, SalePayment $payment)
+    
+    public function reject(Request $request, Sale $sale)
     {
-        if (!auth()->user()->isAdmin()) {
-            return back()->withErrors(['error' => 'Apenas administradores podem rejeitar pagamentos.']);
+        if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'financeiro') {
+            abort(403, 'Unauthorized');
         }
-
-        $request->validate([
-            'rejection_reason' => 'required|string|max:500',
-        ]);
-
-        $payment->update([
-            'status' => 'rejected',
-            'rejection_reason' => $request->rejection_reason,
-        ]);
-
-        return back()->with('success', 'Pagamento rejeitado.');
+        
+        try {
+            $validated = $request->validate([
+                'rejection_reason' => 'required|string|max:500'
+            ]);
+            
+            DB::beginTransaction();
+            
+            // Verify sale is still pending
+            if ($sale->status !== 'pendente') {
+                throw new \Exception('Sale is no longer pending approval');
+            }
+            
+            $sale->update([
+                'status' => 'recusado',
+                'rejected_by' => auth()->id(),
+                'rejected_at' => now(),
+                'rejection_reason' => $validated['rejection_reason']
+            ]);
+            
+            DB::commit();
+            
+            Log::info('Sale rejected', [
+                'sale_id' => $sale->id,
+                'rejected_by' => auth()->id(),
+                'reason' => $validated['rejection_reason']
+            ]);
+            
+            $this->notificationService->notifySaleRejected($sale, $validated['rejection_reason']);
+            
+            return back()->with('message', 'Venda recusada.');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to reject sale', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id()
+            ]);
+            
+            return back()->withErrors(['error' => 'Erro ao recusar venda. Tente novamente.']);
+        }
     }
-
-    public function destroy(SalePayment $payment)
+    
+    // Queued payment processing methods with fallback
+    public function approveWithQueue(Sale $sale)
     {
-        // Only allow deletion by the sale owner or admin
-        if (!auth()->user()->isAdmin() && $payment->sale->user_id !== auth()->id()) {
-            return back()->withErrors(['error' => 'Você não tem permissão para excluir este pagamento.']);
+        if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'financeiro') {
+            abort(403, 'Unauthorized');
         }
-
-        // Only allow deletion if payment is still pending
-        if ($payment->status !== 'pending') {
-            return back()->withErrors(['error' => 'Apenas pagamentos pendentes podem ser excluídos.']);
+        
+        try {
+            // Try to dispatch to queue first
+            ProcessSaleApproval::dispatch($sale->id, auth()->id(), 'approve');
+            
+            Log::info('Sale approval queued', [
+                'sale_id' => $sale->id,
+                'approved_by' => auth()->id()
+            ]);
+            
+            return back()->with('message', 'Venda está sendo processada para aprovação...');
+            
+        } catch (\Exception $e) {
+            Log::warning('Queue failed, falling back to synchronous processing', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            // Fallback to synchronous processing
+            return $this->approve($sale);
         }
-
-        // Delete receipt file if exists
-        if ($payment->receipt_path) {
-            Storage::disk('public')->delete($payment->receipt_path);
+    }
+    
+    public function rejectWithQueue(Request $request, Sale $sale)
+    {
+        if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'financeiro') {
+            abort(403, 'Unauthorized');
         }
-
-        $payment->delete();
-
-        return back()->with('success', 'Pagamento excluído com sucesso.');
+        
+        try {
+            $validated = $request->validate([
+                'rejection_reason' => 'required|string|max:500'
+            ]);
+            
+            // Try to dispatch to queue first
+            ProcessSaleApproval::dispatch(
+                $sale->id, 
+                auth()->id(), 
+                'reject', 
+                $validated['rejection_reason']
+            );
+            
+            Log::info('Sale rejection queued', [
+                'sale_id' => $sale->id,
+                'rejected_by' => auth()->id()
+            ]);
+            
+            return back()->with('message', 'Venda está sendo processada para recusa...');
+            
+        } catch (\Exception $e) {
+            Log::warning('Queue failed, falling back to synchronous processing', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            // Fallback to synchronous processing
+            return $this->reject($request, $sale);
+        }
+    }
+    
+    // PDF Report methods
+    public function generateSalesReport(Request $request)
+    {
+        $month = $request->get('month');
+        $year = $request->get('year');
+        
+        $pdfService = new PDFReportService();
+        return $pdfService->generateSalesReport(auth()->user(), $month, $year);
+    }
+    
+    public function generateCommissionReport(Request $request)
+    {
+        $month = $request->get('month');
+        $year = $request->get('year');
+        
+        $pdfService = new PDFReportService();
+        return $pdfService->generateCommissionReport(auth()->user(), $month, $year);
     }
 }
