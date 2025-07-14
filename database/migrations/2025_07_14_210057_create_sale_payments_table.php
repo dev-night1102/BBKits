@@ -1,56 +1,37 @@
 <?php
 
-namespace App\Models;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class SalePayment extends Model
+return new class extends Migration
 {
-    use HasFactory;
-
-    protected $fillable = [
-        'sale_id',
-        'amount',
-        'payment_date',
-        'payment_method',
-        'receipt_path',
-        'notes',
-        'status',
-        'approved_by',
-        'approved_at',
-        'rejection_reason',
-    ];
-
-    protected $casts = [
-        'amount' => 'decimal:2',
-        'payment_date' => 'date',
-        'approved_at' => 'datetime',
-    ];
-
-    public function sale(): BelongsTo
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
-        return $this->belongsTo(Sale::class);
+        Schema::create('sale_payments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('sale_id')->constrained()->onDelete('cascade');
+            $table->decimal('amount', 10, 2);
+            $table->date('payment_date');
+            $table->string('payment_method')->nullable();
+            $table->string('receipt_path')->nullable(); // Path to payment receipt
+            $table->text('notes')->nullable();
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('approved_at')->nullable();
+            $table->text('rejection_reason')->nullable();
+            $table->timestamps();
+        });
     }
 
-    public function approvedBy(): BelongsTo
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        Schema::dropIfExists('sale_payments');
     }
-
-    public function isApproved(): bool
-    {
-        return $this->status === 'approved';
-    }
-
-    public function isPending(): bool
-    {
-        return $this->status === 'pending';
-    }
-
-    public function isRejected(): bool
-    {
-        return $this->status === 'rejected';
-    }
-}
+};
