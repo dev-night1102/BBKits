@@ -66,17 +66,19 @@ class AdminReportsController extends Controller
                         ->whereMonth('payment_date', $month);
                 }
             ], 'received_amount')
-            ->withSum([
-                'sales as commission_base' => function ($query) use ($month, $year) {
-                    $query->where('status', 'aprovado')
-                        ->whereYear('payment_date', $year)
-                        ->whereMonth('payment_date', $month);
-                }
-            ], DB::raw('received_amount - shipping_amount'))
             ->get()
             ->map(function ($seller) use ($month, $year) {
                 $commissionService = new CommissionService();
-                $commissionBase = $seller->commission_base ?: 0;
+                
+                // Calculate commission base manually to avoid DB::raw issues
+                $commissionBase = Sale::where('user_id', $seller->id)
+                    ->where('status', 'aprovado')
+                    ->whereYear('payment_date', $year)
+                    ->whereMonth('payment_date', $month)
+                    ->get()
+                    ->sum(function ($sale) {
+                        return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+                    });
                 $commission = $this->calculateCommissionForSeller($seller->id, $month, $year);
                 
                 return [
@@ -162,7 +164,10 @@ class AdminReportsController extends Controller
                     ->where('status', 'aprovado')
                     ->whereYear('payment_date', $year)
                     ->whereMonth('payment_date', $month)
-                    ->sum(DB::raw('received_amount - shipping_amount'));
+                    ->get()
+                    ->sum(function ($sale) {
+                        return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+                    });
                 $commissionService = new CommissionService();
                 return $commissionService->calculateCommissionRate($totalBase) > 0;
             })
@@ -212,7 +217,10 @@ class AdminReportsController extends Controller
             ->where('status', 'aprovado')
             ->whereYear('payment_date', $paymentDate->year)
             ->whereMonth('payment_date', $paymentDate->month)
-            ->sum(DB::raw('received_amount - shipping_amount'));
+            ->get()
+            ->sum(function ($s) {
+                return ($s->received_amount ?: 0) - ($s->shipping_amount ?: 0);
+            });
         
         // Use CommissionService for rate calculation
         $rate = $commissionService->calculateCommissionRate($sellerMonthlyTotal);

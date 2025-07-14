@@ -138,18 +138,22 @@ class PDFReportService
                           ->whereMonth('payment_date', $month);
                 }
             ], 'received_amount')
-            ->withSum([
-                'sales as commission_base' => function ($query) use ($month, $year) {
-                    $query->where('status', 'aprovado')
-                          ->whereYear('payment_date', $year)
-                          ->whereMonth('payment_date', $month);
-                }
-            ], DB::raw('received_amount - shipping_amount'))
             ->orderBy('total_revenue', 'desc')
             ->get()
             ->map(function ($user) use ($month, $year) {
+                // Calculate commission base manually to avoid DB::raw issues
+                $commissionBase = Sale::where('user_id', $user->id)
+                    ->where('status', 'aprovado')
+                    ->whereYear('payment_date', $year)
+                    ->whereMonth('payment_date', $month)
+                    ->get()
+                    ->sum(function ($sale) {
+                        return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+                    });
+                
+                $user->commission_base = $commissionBase;
                 $user->commission_earned = $this->calculateCommission($user, $month, $year);
-                $user->commission_rate = $this->getCommissionRate($user->commission_base ?? 0);
+                $user->commission_rate = $this->getCommissionRate($commissionBase);
                 return $user;
             });
 
@@ -184,7 +188,10 @@ class PDFReportService
             ->where('status', 'aprovado')
             ->whereYear('payment_date', $year)
             ->whereMonth('payment_date', $month)
-            ->sum(DB::raw('received_amount - shipping_amount'));
+            ->get()
+            ->sum(function ($sale) {
+                return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+            });
 
         return $commissionBase * $this->getCommissionRate($commissionBase);
     }

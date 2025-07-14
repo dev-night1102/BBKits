@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Sale;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Services\CommissionService;
 
 class GamificationService
 {
@@ -129,7 +130,7 @@ class GamificationService
                         ->whereYear('payment_date', Carbon::now()->year)
                         ->whereMonth('payment_date', Carbon::now()->month);
                 }
-            ], DB::raw('received_amount - shipping_amount'))
+            ], 'received_amount')
             ->withCount([
                 'sales as monthly_sales_count' => function ($query) {
                     $query->where('status', 'aprovado')
@@ -137,15 +138,32 @@ class GamificationService
                         ->whereMonth('payment_date', Carbon::now()->month);
                 }
             ])
-            ->having('monthly_total', '>', 0)
-            ->orderBy('monthly_total', 'desc')
             ->get()
+            ->map(function ($user) {
+                // Calculate monthly total manually to avoid DB::raw issues
+                $monthlyTotal = Sale::where('user_id', $user->id)
+                    ->where('status', 'aprovado')
+                    ->whereYear('payment_date', Carbon::now()->year)
+                    ->whereMonth('payment_date', Carbon::now()->month)
+                    ->get()
+                    ->sum(function ($sale) {
+                        return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+                    });
+                
+                $user->monthly_total = $monthlyTotal;
+                return $user;
+            })
+            ->filter(function ($user) {
+                return $user->monthly_total > 0;
+            })
+            ->sortByDesc('monthly_total')
+            ->values()
             ->map(function ($user, $index) {
                 $level = $this->getUserLevel($user);
                 return [
                     'position' => $index + 1,
                     'user' => $user,
-                    'monthly_total' => $user->monthly_total ?? 0,
+                    'monthly_total' => $user->monthly_total,
                     'monthly_sales_count' => $user->monthly_sales_count ?? 0,
                     'level' => $level,
                     'badge' => $this->getPositionBadge($index + 1)
@@ -203,7 +221,10 @@ class GamificationService
             ->where('status', 'aprovado')
             ->whereYear('payment_date', Carbon::now()->year)
             ->whereMonth('payment_date', Carbon::now()->month)
-            ->sum(DB::raw('received_amount - shipping_amount')) ?? 0;
+            ->get()
+            ->sum(function ($sale) {
+                return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+            });
     }
 
     private function getMonthlySalesCount(User $user): int

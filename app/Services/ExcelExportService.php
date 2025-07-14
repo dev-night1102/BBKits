@@ -177,7 +177,10 @@ class ExcelExportService
             ->where('status', 'aprovado')
             ->whereYear('payment_date', $sale->payment_date->year)
             ->whereMonth('payment_date', $sale->payment_date->month)
-            ->sum(DB::raw('received_amount - shipping_amount'));
+            ->get()
+            ->sum(function ($s) {
+                return ($s->received_amount ?: 0) - ($s->shipping_amount ?: 0);
+            });
         
         // Use CommissionService for rate calculation
         $commissionService = new CommissionService();

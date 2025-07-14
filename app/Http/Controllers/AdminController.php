@@ -50,7 +50,10 @@ class AdminController extends Controller
                 ->where('status', 'aprovado')
                 ->whereYear('payment_date', $currentYear)
                 ->whereMonth('payment_date', $currentMonth)
-                ->sum(DB::raw('received_amount - shipping_amount'));
+                ->get()
+                ->sum(function ($sale) {
+                    return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+                });
             
             $commissionRate = $commissionService->calculateCommissionRate($sellerMonthlyTotal);
             $monthlyCommissions += $sellerMonthlyTotal * ($commissionRate / 100);
@@ -84,7 +87,10 @@ class AdminController extends Controller
                     ->where('status', 'aprovado')
                     ->whereYear('payment_date', $currentYear)
                     ->whereMonth('payment_date', $currentMonth)
-                    ->sum(DB::raw('received_amount - shipping_amount'));
+                    ->get()
+                    ->sum(function ($sale) {
+                        return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+                    });
                 
                 $commissionRate = $commissionService->calculateCommissionRate($commissionBase);
                 $commission = $commissionBase * ($commissionRate / 100);
