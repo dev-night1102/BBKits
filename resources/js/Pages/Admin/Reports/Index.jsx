@@ -342,7 +342,8 @@ export default function ReportsIndex({ salesData, commissionData, totalStats }) 
                                         </div>
                                         <div>
                                             <p className="text-sm text-green-600 font-medium">Total Vendas</p>
-                                            <p className="text-2xl font-bold text-green-800">{formatCurrency(totalStats?.totalSales || 0)}</p>
+                                            <p className="text-2xl font-bold text-green-800">{formatCurrency(totalStats?.totalSaleValue || 0)}</p>
+                                            <p className="text-xs text-green-500">Recebido: {formatCurrency(totalStats?.totalReceivedAmount || 0)}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -398,53 +399,68 @@ export default function ReportsIndex({ salesData, commissionData, totalStats }) 
                                                         </div>
                                                         <div className="text-right">
                                                             <div className="text-2xl font-bold text-green-600">
-                                                                {formatCurrency(seller.totalSales)}
+                                                                {formatCurrency(seller.totalSaleValue || seller.totalSales)}
                                                             </div>
                                                             <div className="text-sm text-gray-500">
                                                                 {seller.salesCount} vendas
                                                             </div>
+                                                            <div className="text-xs text-blue-600">
+                                                                Recebido: {formatCurrency(seller.totalReceivedAmount || seller.totalSales)}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     
-                                                    {/* 7-Point Information System */}
+                                                    {/* Payment Status Information System */}
                                                     <div className="space-y-3 mb-4">
-                                                        {/* 1. Total Sales */}
+                                                        {/* 1. Total Sale Value */}
                                                         <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                                            <span className="text-sm font-medium text-gray-600">1. Total de Vendas</span>
-                                                            <span className="text-lg font-bold text-gray-800">{formatCurrency(seller.totalSales)}</span>
+                                                            <span className="text-sm font-medium text-gray-600">1. Valor Total das Vendas</span>
+                                                            <span className="text-lg font-bold text-gray-800">{formatCurrency(seller.totalSaleValue || seller.totalSales)}</span>
                                                         </div>
                                                         
-                                                        {/* 2. Approved Sales */}
-                                                        <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                                                            <span className="text-sm font-medium text-green-600">2. Vendas Aprovadas</span>
-                                                            <span className="text-lg font-bold text-green-800">{formatCurrency(seller.approvedSales)}</span>
-                                                        </div>
-                                                        
-                                                        {/* 3. Pending Sales */}
-                                                        <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                                                            <span className="text-sm font-medium text-yellow-600">3. Vendas Pendentes</span>
-                                                            <span className="text-lg font-bold text-yellow-800">{formatCurrency(seller.pendingSales || 0)}</span>
-                                                        </div>
-                                                        
-                                                        {/* 4. Total Shipping */}
+                                                        {/* 2. Total Received Amount */}
                                                         <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                                                            <span className="text-sm font-medium text-blue-600">4. Total de Frete</span>
-                                                            <span className="text-lg font-bold text-blue-800">{formatCurrency(seller.totalShipping || 0)}</span>
+                                                            <span className="text-sm font-medium text-blue-600">2. Valor Recebido</span>
+                                                            <span className="text-lg font-bold text-blue-800">{formatCurrency(seller.totalReceivedAmount || seller.totalSales)}</span>
                                                         </div>
                                                         
-                                                        {/* 5. Commission Base */}
+                                                        {/* 3. Remaining Amount */}
+                                                        <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                                                            <span className="text-sm font-medium text-red-600">3. Valor Restante</span>
+                                                            <span className="text-lg font-bold text-red-800">{formatCurrency(seller.totalRemainingAmount || 0)}</span>
+                                                        </div>
+                                                        
+                                                        {/* 4. Approved Sales Value */}
+                                                        <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                                            <span className="text-sm font-medium text-green-600">4. Vendas Aprovadas (Valor)</span>
+                                                            <span className="text-lg font-bold text-green-800">{formatCurrency(seller.approvedSaleValue || seller.approvedSales)}</span>
+                                                        </div>
+                                                        
+                                                        {/* 5. Pending Sales Value */}
+                                                        <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                                                            <span className="text-sm font-medium text-yellow-600">5. Vendas Pendentes (Valor)</span>
+                                                            <span className="text-lg font-bold text-yellow-800">{formatCurrency(seller.pendingSaleValue || seller.pendingSales || 0)}</span>
+                                                        </div>
+                                                        
+                                                        {/* 6. Total Shipping */}
+                                                        <div className="flex justify-between items-center p-3 bg-indigo-50 rounded-lg">
+                                                            <span className="text-sm font-medium text-indigo-600">6. Total de Frete</span>
+                                                            <span className="text-lg font-bold text-indigo-800">{formatCurrency(seller.totalShipping || 0)}</span>
+                                                        </div>
+                                                        
+                                                        {/* 7. Commission Base */}
                                                         <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                                                            <span className="text-sm font-medium text-purple-600">5. Base de Comissão</span>
+                                                            <span className="text-sm font-medium text-purple-600">7. Base de Comissão</span>
                                                             <span className="text-lg font-bold text-purple-800">{formatCurrency(seller.commissionBase)}</span>
                                                         </div>
                                                         
-                                                        {/* 6. Total Commission */}
+                                                        {/* 8. Total Commission */}
                                                         <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-                                                            <span className="text-sm font-medium text-orange-600">6. Comissão Total ({seller.commissionRate}%)</span>
+                                                            <span className="text-sm font-medium text-orange-600">8. Comissão Total ({seller.commissionRate}%)</span>
                                                             <span className="text-lg font-bold text-orange-800">{formatCurrency(seller.totalCommission)}</span>
                                                         </div>
                                                         
-                                                        {/* 7. View All Sales Button */}
+                                                        {/* 9. View All Sales Button */}
                                                         <button
                                                             onClick={() => handleViewSales(seller)}
                                                             className="w-full p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
@@ -452,7 +468,7 @@ export default function ReportsIndex({ salesData, commissionData, totalStats }) 
                                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                                             </svg>
-                                                            7. Ver Todas as Vendas
+                                                            9. Ver Todas as Vendas
                                                         </button>
                                                     </div>
                                                     

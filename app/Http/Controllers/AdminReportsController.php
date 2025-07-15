@@ -54,13 +54,26 @@ class AdminReportsController extends Controller
                 }
             ])
             ->withSum([
-                'sales as total_amount' => function ($query) use ($month, $year) {
+                'sales as total_sale_value' => function ($query) use ($month, $year) {
+                    $query->whereYear('payment_date', $year)
+                        ->whereMonth('payment_date', $month);
+                }
+            ], 'total_amount')
+            ->withSum([
+                'sales as total_received_amount' => function ($query) use ($month, $year) {
                     $query->whereYear('payment_date', $year)
                         ->whereMonth('payment_date', $month);
                 }
             ], 'received_amount')
             ->withSum([
-                'sales as approved_amount' => function ($query) use ($month, $year) {
+                'sales as approved_sale_value' => function ($query) use ($month, $year) {
+                    $query->where('status', 'aprovado')
+                        ->whereYear('payment_date', $year)
+                        ->whereMonth('payment_date', $month);
+                }
+            ], 'total_amount')
+            ->withSum([
+                'sales as approved_received_amount' => function ($query) use ($month, $year) {
                     $query->where('status', 'aprovado')
                         ->whereYear('payment_date', $year)
                         ->whereMonth('payment_date', $month);
@@ -79,11 +92,16 @@ class AdminReportsController extends Controller
                 $approvedSales = $allSales->where('status', 'aprovado');
                 $pendingSales = $allSales->where('status', 'pendente');
                 
-                // Calculate totals
-                $pendingAmount = $pendingSales->sum('received_amount');
+                // Calculate totals - now properly separating sale value from received amount
+                $totalSaleValue = $allSales->sum('total_amount');
+                $totalReceivedAmount = $allSales->sum('received_amount');
+                $approvedSaleValue = $approvedSales->sum('total_amount');
+                $approvedReceivedAmount = $approvedSales->sum('received_amount');
+                $pendingSaleValue = $pendingSales->sum('total_amount');
+                $pendingReceivedAmount = $pendingSales->sum('received_amount');
                 $totalShipping = $allSales->sum('shipping_amount');
                 
-                // Calculate commission base manually to avoid DB::raw issues
+                // Calculate commission base using received amount for commission calculation
                 $commissionBase = $approvedSales->sum(function ($sale) {
                     return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
                 });
@@ -96,9 +114,22 @@ class AdminReportsController extends Controller
                     'email' => $seller->email,
                     'salesCount' => $seller->total_sales_count,
                     'approvedSalesCount' => $seller->approved_sales_count,
-                    'totalSales' => $seller->total_amount ?: 0,
-                    'approvedSales' => $seller->approved_amount ?: 0,
-                    'pendingSales' => $pendingAmount,
+                    // Sales values (full sale amounts)
+                    'totalSaleValue' => $totalSaleValue,
+                    'approvedSaleValue' => $approvedSaleValue,
+                    'pendingSaleValue' => $pendingSaleValue,
+                    // Received amounts (payments received)
+                    'totalReceivedAmount' => $totalReceivedAmount,
+                    'approvedReceivedAmount' => $approvedReceivedAmount,
+                    'pendingReceivedAmount' => $pendingReceivedAmount,
+                    // Remaining amounts
+                    'totalRemainingAmount' => $totalSaleValue - $totalReceivedAmount,
+                    'approvedRemainingAmount' => $approvedSaleValue - $approvedReceivedAmount,
+                    'pendingRemainingAmount' => $pendingSaleValue - $pendingReceivedAmount,
+                    // Legacy fields for compatibility
+                    'totalSales' => $seller->total_sale_value ?: 0,
+                    'approvedSales' => $seller->approved_sale_value ?: 0,
+                    'pendingSales' => $pendingSaleValue,
                     'totalShipping' => $totalShipping,
                     'commissionBase' => $commissionBase,
                     'totalCommission' => $commission,
@@ -146,11 +177,22 @@ class AdminReportsController extends Controller
     {
         $totalSellers = User::where('role', 'vendedora')->count();
         
-        $totalSales = Sale::whereYear('payment_date', $year)
+        // Total sale values (full sale amounts)
+        $totalSaleValue = Sale::whereYear('payment_date', $year)
+            ->whereMonth('payment_date', $month)
+            ->sum('total_amount');
+            
+        // Total received amounts (payments received)
+        $totalReceivedAmount = Sale::whereYear('payment_date', $year)
             ->whereMonth('payment_date', $month)
             ->sum('received_amount');
             
-        $approvedSales = Sale::where('status', 'aprovado')
+        $approvedSaleValue = Sale::where('status', 'aprovado')
+            ->whereYear('payment_date', $year)
+            ->whereMonth('payment_date', $month)
+            ->sum('total_amount');
+            
+        $approvedReceivedAmount = Sale::where('status', 'aprovado')
             ->whereYear('payment_date', $year)
             ->whereMonth('payment_date', $month)
             ->sum('received_amount');
@@ -186,11 +228,21 @@ class AdminReportsController extends Controller
 
         return [
             'totalSellers' => $totalSellers,
-            'totalSales' => $totalSales,
-            'approvedSales' => $approvedSales,
+            // Sales values (full sale amounts)
+            'totalSaleValue' => $totalSaleValue,
+            'approvedSaleValue' => $approvedSaleValue,
+            // Received amounts (payments received)
+            'totalReceivedAmount' => $totalReceivedAmount,
+            'approvedReceivedAmount' => $approvedReceivedAmount,
+            // Remaining amounts
+            'totalRemainingAmount' => $totalSaleValue - $totalReceivedAmount,
+            'approvedRemainingAmount' => $approvedSaleValue - $approvedReceivedAmount,
+            // Legacy fields for compatibility
+            'totalSales' => $totalSaleValue,
+            'approvedSales' => $approvedSaleValue,
             'totalCommissions' => $totalCommissions,
             'metaAchieved' => $sellersWithMeta,
-            'approvalRate' => $totalSales > 0 ? ($approvedSales / $totalSales) * 100 : 0,
+            'approvalRate' => $totalSaleValue > 0 ? ($approvedSaleValue / $totalSaleValue) * 100 : 0,
         ];
     }
 
