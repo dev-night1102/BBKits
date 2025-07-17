@@ -43,14 +43,34 @@ Route::get('/dashboard', function () {
             // Calculate totals
             $monthlySalesCount = $allMonthlySales->count();
             $approvedSalesCount = $approvedSales->count();
-            $totalSalesAmount = $allMonthlySales->sum('received_amount');
-            $approvedSalesTotal = $approvedSales->sum('received_amount');
-            $pendingSalesTotal = $pendingSales->sum('received_amount');
+            
+            // Calculate totals considering payment records
+            $totalSalesAmount = $allMonthlySales->sum(function ($sale) {
+                if ($sale->hasPartialPayments()) {
+                    return $sale->total_amount; // Show total sale value
+                }
+                return $sale->received_amount;
+            });
+            
+            $approvedSalesTotal = $approvedSales->sum(function ($sale) {
+                if ($sale->hasPartialPayments()) {
+                    return $sale->getTotalPaidAmount(); // Show actual paid amount
+                }
+                return $sale->received_amount;
+            });
+            
+            $pendingSalesTotal = $pendingSales->sum(function ($sale) {
+                if ($sale->hasPartialPayments()) {
+                    return $sale->getTotalPendingAmount(); // Show pending payments
+                }
+                return $sale->received_amount;
+            });
+            
             $totalShipping = $allMonthlySales->sum('shipping_amount');
             
             // Calculate commission base
             $commissionBase = $approvedSales->sum(function ($sale) {
-                return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
+                return $sale->getCommissionBaseAmount();
             });
             
             $monthlyCommission = $user->getMonthlyCommissionTotal($currentMonth, $currentYear);

@@ -109,11 +109,24 @@ class User extends Authenticatable
 
     public function getMonthlySalesTotal(int $month, int $year): float
     {
-        return $this->sales()
+        $sales = $this->sales()
             ->whereYear('payment_date', $year)
             ->whereMonth('payment_date', $month)
             ->where('status', 'aprovado')
-            ->sum('received_amount');
+            ->get();
+            
+        $total = 0;
+        foreach ($sales as $sale) {
+            // If sale has payment records, use approved payments total
+            if ($sale->hasPartialPayments()) {
+                $total += $sale->getTotalPaidAmount();
+            } else {
+                // Fallback to received_amount for backward compatibility
+                $total += $sale->received_amount;
+            }
+        }
+        
+        return $total;
     }
 
     public function isSeller(): bool

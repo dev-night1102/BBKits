@@ -54,6 +54,12 @@ class Sale extends Model
 
     public function getCommissionBaseAmount(): float
     {
+        // If sale has payment records, use the approved payments total
+        if ($this->hasPartialPayments()) {
+            return $this->getTotalPaidAmount() - $this->shipping_amount;
+        }
+        
+        // Fallback to original received_amount for backward compatibility
         return $this->received_amount - $this->shipping_amount;
     }
 
