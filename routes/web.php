@@ -94,6 +94,7 @@ Route::get('/dashboard', function () {
                     'commissionRanges' => $monthlyProgress['commission_ranges']
                 ],
                 'recentSales' => $recentSales,
+                'allMonthlySales' => $allMonthlySales, // Add all monthly sales for the modal
                 'gamification' => [
                     'level' => [
                         'level' => 1,

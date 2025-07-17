@@ -26,10 +26,10 @@ export default function SalesModal({ isOpen, onClose, sales, sellerName }) {
 
     const totalStats = useMemo(() => {
         return {
-            total: filteredSales.reduce((sum, sale) => sum + sale.received_amount, 0),
-            approved: filteredSales.filter(s => s.status === 'aprovado').reduce((sum, sale) => sum + sale.received_amount, 0),
-            pending: filteredSales.filter(s => s.status === 'pendente').reduce((sum, sale) => sum + sale.received_amount, 0),
-            rejected: filteredSales.filter(s => s.status === 'recusado').reduce((sum, sale) => sum + sale.received_amount, 0),
+            total: filteredSales.reduce((sum, sale) => sum + (sale.received_amount || 0), 0),
+            approved: filteredSales.filter(s => s.status === 'aprovado').reduce((sum, sale) => sum + (sale.received_amount || 0), 0),
+            pending: filteredSales.filter(s => s.status === 'pendente').reduce((sum, sale) => sum + (sale.received_amount || 0), 0),
+            rejected: filteredSales.filter(s => s.status === 'recusado').reduce((sum, sale) => sum + (sale.received_amount || 0), 0),
         };
     }, [filteredSales]);
 

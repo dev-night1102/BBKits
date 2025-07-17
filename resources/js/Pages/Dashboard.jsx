@@ -5,7 +5,7 @@ import SalesModal from '@/Components/SalesModal';
 import RankingDisplay from '@/Components/RankingDisplay';
 
 export default function Dashboard() {
-    const { auth, gamification, salesData, recentSales } = usePage().props;
+    const { auth, gamification, salesData, recentSales, allMonthlySales } = usePage().props;
     const [modalOpen, setModalOpen] = useState(false);
     
     const handleViewSales = () => {
@@ -777,7 +777,7 @@ export default function Dashboard() {
             <SalesModal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
-                sales={recentSales || []}
+                sales={allMonthlySales || []}
                 sellerName={auth.user.name || ''}
             />
 
