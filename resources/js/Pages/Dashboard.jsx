@@ -340,7 +340,7 @@ export default function Dashboard() {
                                         <div>
                                             <p className="mb-2 text-sm font-medium text-white/90">Total de Vendas</p>
                                             <p className="text-2xl font-bold drop-shadow-lg">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlySalesTotal || 0)}
+                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.totalSalesAmount || 0)}
                                             </p>
                                             <p className="text-xs text-white/80 mt-1">💼 {salesData?.monthlySalesCount || 0} vendas cadastradas</p>
                                         </div>
@@ -419,10 +419,10 @@ export default function Dashboard() {
                                     </div>
                                     <div className="mb-6">
                                         <p className="text-sm text-gray-600 mb-2">
-                                            Vendido: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlySalesTotal || 0)} de R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyGoal || 40000)}
+                                            Vendido: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.totalSalesAmount || 0)} de R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyGoal || 40000)}
                                         </p>
                                         <p className="text-sm text-gray-600">
-                                            Faltam: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(Math.max(0, (salesData?.monthlyGoal || 40000) - (salesData?.monthlySalesTotal || 0)))}
+                                            Faltam: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(Math.max(0, (salesData?.monthlyGoal || 40000) - (salesData?.totalSalesAmount || 0)))}
                                         </p>
                                     </div>
                                     <div className="motivational-card p-6 rounded-2xl text-white relative overflow-hidden">

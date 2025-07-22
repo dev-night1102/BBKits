@@ -1,4 +1,4 @@
-import{j as e,Q as r}from"./app-CoIEgFCB.js";import{A as s}from"./AuthenticatedLayout-DGE4JWJT.js";import o from"./DeleteUserForm-BMhF3H_4.js";import n from"./UpdatePasswordForm-BSCvrBEP.js";import l from"./UpdateProfileInformationForm-BNPq18SU.js";import"./transition-Buxlp4x3.js";import"./dialog-C8qJL8ev.js";import"./TextInput-DRvf1pSM.js";function b({mustVerifyEmail:t,status:a}){return e.jsxs(e.Fragment,{children:[e.jsx(r,{title:"Meu Perfil - BBKits"}),e.jsx("style",{children:`
+import{j as e,Q as r}from"./app-DVC9hec3.js";import{A as s}from"./AuthenticatedLayout-DPlwk8Qw.js";import o from"./DeleteUserForm-C3VG773e.js";import n from"./UpdatePasswordForm-CnmTwsuW.js";import l from"./UpdateProfileInformationForm-DmjR6JLX.js";import"./transition-W6CtxPUy.js";import"./dialog-B0jvoSLt.js";import"./TextInput-DwYPsPJm.js";function b({mustVerifyEmail:t,status:a}){return e.jsxs(e.Fragment,{children:[e.jsx(r,{title:"Meu Perfil - BBKits"}),e.jsx("style",{children:`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
                 
                 :root {

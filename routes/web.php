@@ -94,6 +94,12 @@ Route::get('/dashboard', function () {
             // Get comprehensive monthly progress including commission insights
             $monthlyProgress = $commissionService->getMonthlyProgress($user, $currentMonth, $currentYear);
             
+            // Calculate progress based on total sales (not just approved)
+            $defaultGoal = 40000; // Default monthly goal
+            $calculatedGoal = $monthlyProgress['remaining_to_goal'] + $monthlySalesTotal;
+            $actualGoal = max($defaultGoal, $calculatedGoal); // Use whichever is higher
+            $progressPercentage = $actualGoal > 0 ? round(($totalSalesAmount / $actualGoal) * 100, 1) : 0;
+            
             return Inertia::render('Dashboard', [
                 'salesData' => [
                     'monthlySalesCount' => $monthlySalesCount,
@@ -105,8 +111,8 @@ Route::get('/dashboard', function () {
                     'commissionBase' => $commissionBase,
                     'monthlyCommission' => $monthlyCommission,
                     'monthlySalesTotal' => $monthlySalesTotal,
-                    'monthlyGoal' => $monthlyProgress['remaining_to_goal'] + $monthlySalesTotal,
-                    'progressPercentage' => round($monthlyProgress['progress_percentage'], 1),
+                    'monthlyGoal' => $actualGoal,
+                    'progressPercentage' => $progressPercentage,
                     'currentRate' => $monthlyProgress['current_rate'],
                     'nextBracket' => $monthlyProgress['next_bracket'],
                     'potentialEarnings' => $monthlyProgress['potential_earnings'],

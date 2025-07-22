@@ -203,6 +203,11 @@ export default function Index({ sales }) {
                     color: white;
                 }
 
+                .action-btn-payment {
+                    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+                    color: white;
+                }
+
                 .floating-particles {
                     position: fixed;
                     top: 0;
@@ -429,6 +434,14 @@ export default function Index({ sales }) {
                                                                 >
                                                                     <i className="fas fa-eye mr-1"></i>
                                                                     Ver
+                                                                </Link>
+                                                                <Link 
+                                                                    href={route('payments.index', sale.id)}
+                                                                    className="action-btn action-btn-payment"
+                                                                    title="Gerenciar Pagamentos"
+                                                                >
+                                                                    <i className="fas fa-dollar-sign mr-1"></i>
+                                                                    Pagamentos
                                                                 </Link>
                                                                 {sale.status === 'pendente' && (
                                                                     <>
