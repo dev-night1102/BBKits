@@ -25,13 +25,18 @@ class Sale extends Model
         'approved_at',
         'rejected_by',
         'rejected_at',
-        'rejection_reason'
+        'rejection_reason',
+        'corrected_by',
+        'corrected_at',
+        'correction_reason',
+        'original_status'
     ];
 
     protected $casts = [
         'payment_date' => 'date',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'corrected_at' => 'datetime',
         'total_amount' => 'decimal:2',
         'shipping_amount' => 'decimal:2',
         'received_amount' => 'decimal:2',

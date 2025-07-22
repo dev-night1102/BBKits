@@ -142,4 +142,36 @@ class AdminController extends Controller
         $pdfService = new PDFReportService();
         return $pdfService->generateTeamReport($month, $year);
     }
+
+    public function users()
+    {
+        $users = User::where('role', 'vendedora')
+            ->with(['approvedBy'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return Inertia::render('Admin/Users/Index', compact('users'));
+    }
+
+    public function approveUser(User $user)
+    {
+        $user->update([
+            'approved' => true,
+            'approved_at' => now(),
+            'approved_by' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Usuário aprovado com sucesso.');
+    }
+
+    public function rejectUser(User $user)
+    {
+        $user->update([
+            'approved' => false,
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        return redirect()->back()->with('success', 'Aprovação do usuário revogada.');
+    }
 }

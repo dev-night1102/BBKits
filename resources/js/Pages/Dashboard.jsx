@@ -3,6 +3,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import SalesModal from '@/Components/SalesModal';
 import RankingDisplay from '@/Components/RankingDisplay';
+import { formatCurrency, formatCurrencyWithSymbol } from '@/utils/currency';
 
 export default function Dashboard() {
     const { auth, gamification, salesData, recentSales, allMonthlySales } = usePage().props;
@@ -340,7 +341,7 @@ export default function Dashboard() {
                                         <div>
                                             <p className="mb-2 text-sm font-medium text-white/90">Total de Vendas</p>
                                             <p className="text-2xl font-bold drop-shadow-lg">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.totalSalesAmount || 0)}
+                                                R$ {formatCurrency(salesData?.totalSalesAmount || 0)}
                                             </p>
                                             <p className="text-xs text-white/80 mt-1">💼 {salesData?.monthlySalesCount || 0} vendas cadastradas</p>
                                         </div>
@@ -357,7 +358,7 @@ export default function Dashboard() {
                                         <div>
                                             <p className="mb-2 text-sm font-medium text-white/90">Comissão do Mês</p>
                                             <p className="text-2xl font-bold drop-shadow-lg">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyCommission || 0)}
+                                                R$ {formatCurrency(salesData?.monthlyCommission || 0)}
                                             </p>
                                             <p className="text-xs text-white/80 mt-1">💰 Seus ganhos</p>
                                         </div>
@@ -374,7 +375,7 @@ export default function Dashboard() {
                                         <div>
                                             <p className="mb-2 text-sm font-medium text-white/90">Vendas Aprovadas</p>
                                             <p className="text-2xl font-bold drop-shadow-lg">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.approvedSalesTotal || 0)}
+                                                R$ {formatCurrency(salesData?.approvedSalesTotal || 0)}
                                             </p>
                                             <p className="text-xs text-white/80 mt-1">✅ {salesData?.approvedSalesCount || 0} aprovadas</p>
                                         </div>
@@ -391,7 +392,7 @@ export default function Dashboard() {
                                         <div>
                                             <p className="mb-2 text-sm font-medium text-white/90">Meta do Mês</p>
                                             <p className="text-2xl font-bold drop-shadow-lg">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyGoal || 40000)}
+                                                R$ {formatCurrency(salesData?.monthlyGoal || 40000)}
                                             </p>
                                             <p className="text-xs text-white/80 mt-1">🎯 Objetivo</p>
                                         </div>
@@ -414,15 +415,15 @@ export default function Dashboard() {
                                     <div className="flex justify-between items-center mb-4">
                                         <p className="text-lg font-medium text-gray-700">{salesData?.progressPercentage || 0}% da meta mensal alcançada</p>
                                         <p className="text-sm text-gray-600 bg-white/70 px-3 py-1 rounded-full">
-                                            Meta: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyGoal || 40000)}
+                                            Meta: R$ {formatCurrency(salesData?.monthlyGoal || 40000)}
                                         </p>
                                     </div>
                                     <div className="mb-6">
                                         <p className="text-sm text-gray-600 mb-2">
-                                            Vendido: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.totalSalesAmount || 0)} de R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyGoal || 40000)}
+                                            Vendido: R$ {formatCurrency(salesData?.totalSalesAmount || 0)} de R$ {formatCurrency(salesData?.monthlyGoal || 40000)}
                                         </p>
                                         <p className="text-sm text-gray-600">
-                                            Faltam: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(Math.max(0, (salesData?.monthlyGoal || 40000) - (salesData?.totalSalesAmount || 0)))}
+                                            Faltam: R$ {formatCurrency(Math.max(0, (salesData?.monthlyGoal || 40000) - (salesData?.totalSalesAmount || 0)))}
                                         </p>
                                     </div>
                                     <div className="motivational-card p-6 rounded-2xl text-white relative overflow-hidden">
@@ -467,13 +468,13 @@ export default function Dashboard() {
                                             <p className="text-sm font-medium text-gray-600 mb-2">Próxima Faixa de Comissão</p>
                                             <div className="flex items-center justify-between mb-2">
                                                 <p className="text-lg font-semibold text-gray-800">
-                                                    R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData.nextBracket.min_amount)}
+                                                    R$ {formatCurrency(salesData.nextBracket.min_amount)}
                                                 </p>
                                                 <p className="text-2xl font-bold text-purple-600">{salesData.nextBracket.percentage}%</p>
                                             </div>
                                             <p className="text-sm text-gray-600">
                                                 Faltam <span className="font-bold text-purple-600">
-                                                    R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData.nextBracket.amount_needed)}
+                                                    R$ {formatCurrency(salesData.nextBracket.amount_needed)}
                                                 </span> para alcançar
                                             </p>
                                         </div>
@@ -488,13 +489,13 @@ export default function Dashboard() {
                                                     <p className="font-semibold text-green-800 mb-2">Simulação de Ganhos</p>
                                                     <p className="text-sm text-green-700 mb-1">
                                                         Comissão atual: <span className="font-bold">
-                                                            R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData.potentialEarnings.current_commission)}
+                                                            R$ {formatCurrency(salesData.potentialEarnings.current_commission)}
                                                         </span>
                                                     </p>
                                                     <p className="text-sm text-green-700">
-                                                        Se vender mais <span className="font-bold">R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData.nextBracket?.amount_needed || 0)}</span>, 
+                                                        Se vender mais <span className="font-bold">R$ {formatCurrency(salesData.nextBracket?.amount_needed || 0)}</span>, 
                                                         você ganhará <span className="font-bold text-green-600">
-                                                            +R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData.potentialEarnings.additional_commission)}
+                                                            +R$ {formatCurrency(salesData.potentialEarnings.additional_commission)}
                                                         </span> de comissão!
                                                     </p>
                                                 </div>
@@ -510,8 +511,8 @@ export default function Dashboard() {
                                                 {salesData.commissionRanges.map((range, index) => (
                                                     <div key={index} className="flex items-center justify-between p-3 bg-white/50 rounded-lg">
                                                         <span className="text-sm text-gray-700">
-                                                            R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(range.min_amount)}
-                                                            {range.max_amount ? ` - R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(range.max_amount)}` : '+'}
+                                                            R$ {formatCurrency(range.min_amount)}
+                                                            {range.max_amount ? ` - R$ ${formatCurrency(range.max_amount)}` : '+'}
                                                         </span>
                                                         <span className="font-bold text-purple-600">{range.percentage}%</span>
                                                     </div>
@@ -535,7 +536,7 @@ export default function Dashboard() {
                                         <div className="flex justify-between items-center p-4 bg-white/50 rounded-lg border border-gray-200">
                                             <span className="text-sm font-medium text-gray-600">1. Total de Vendas</span>
                                             <span className="text-lg font-bold text-gray-800">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.totalSalesAmount || 0)}
+                                                R$ {formatCurrency(salesData?.totalSalesAmount || 0)}
                                             </span>
                                         </div>
                                         
@@ -543,7 +544,7 @@ export default function Dashboard() {
                                         <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg border border-green-200">
                                             <span className="text-sm font-medium text-green-600">2. Vendas Aprovadas</span>
                                             <span className="text-lg font-bold text-green-800">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.approvedSalesTotal || 0)}
+                                                R$ {formatCurrency(salesData?.approvedSalesTotal || 0)}
                                             </span>
                                         </div>
                                         
@@ -551,7 +552,7 @@ export default function Dashboard() {
                                         <div className="flex justify-between items-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                                             <span className="text-sm font-medium text-yellow-600">3. Vendas Pendentes</span>
                                             <span className="text-lg font-bold text-yellow-800">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.pendingSalesTotal || 0)}
+                                                R$ {formatCurrency(salesData?.pendingSalesTotal || 0)}
                                             </span>
                                         </div>
                                         
@@ -559,7 +560,7 @@ export default function Dashboard() {
                                         <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg border border-blue-200">
                                             <span className="text-sm font-medium text-blue-600">4. Total de Frete</span>
                                             <span className="text-lg font-bold text-blue-800">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.totalShipping || 0)}
+                                                R$ {formatCurrency(salesData?.totalShipping || 0)}
                                             </span>
                                         </div>
                                         
@@ -567,7 +568,7 @@ export default function Dashboard() {
                                         <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg border border-purple-200">
                                             <span className="text-sm font-medium text-purple-600">5. Base de Comissão</span>
                                             <span className="text-lg font-bold text-purple-800">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.commissionBase || 0)}
+                                                R$ {formatCurrency(salesData?.commissionBase || 0)}
                                             </span>
                                         </div>
                                         
@@ -575,7 +576,7 @@ export default function Dashboard() {
                                         <div className="flex justify-between items-center p-4 bg-orange-50 rounded-lg border border-orange-200">
                                             <span className="text-sm font-medium text-orange-600">6. Comissão Total ({salesData?.currentRate || 0}%)</span>
                                             <span className="text-lg font-bold text-orange-800">
-                                                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(salesData?.monthlyCommission || 0)}
+                                                R$ {formatCurrency(salesData?.monthlyCommission || 0)}
                                             </span>
                                         </div>
                                         
@@ -614,12 +615,12 @@ export default function Dashboard() {
                                                             <span className="font-medium text-gray-800">{sale.client_name}</span>
                                                         </div>
                                                         <p className="text-sm text-gray-600 mt-1">
-                                                            Recebido: R$ {parseFloat(sale.received_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} • {new Date(sale.payment_date).toLocaleDateString('pt-BR')}
+                                                            Recebido: R$ {formatCurrency(sale.received_amount || 0)} • {new Date(sale.payment_date).toLocaleDateString('pt-BR')}
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="font-bold text-gray-800">
-                                                            R$ {parseFloat(sale.total_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                            R$ {formatCurrency(sale.total_amount || 0)}
                                                         </p>
                                                         <span className={`text-xs px-2 py-1 rounded-full ${
                                                             sale.status === 'aprovado' ? 'bg-green-100 text-green-800' :

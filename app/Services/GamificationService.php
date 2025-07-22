@@ -182,7 +182,7 @@ class GamificationService
                 ];
             });
 
-        return $users->toArray();
+        return $users->take(3)->toArray();
     }
 
     public function getUserAchievements(User $user): array

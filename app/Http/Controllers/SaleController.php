@@ -342,4 +342,83 @@ class SaleController extends Controller
         $pdfService = new PDFReportService();
         return $pdfService->generateCommissionReport(auth()->user(), $month, $year);
     }
+
+    public function correct(Request $request, Sale $sale)
+    {
+        $validated = $request->validate([
+            'total_amount' => 'required|numeric|min:0',
+            'shipping_amount' => 'required|numeric|min:0',
+            'received_amount' => 'required|numeric|min:0',
+            'payment_date' => 'required|date',
+            'correction_reason' => 'required|string|max:1000',
+        ]);
+
+        DB::transaction(function () use ($sale, $validated) {
+            $originalStatus = $sale->status;
+            $originalMonth = $sale->payment_date ? $sale->payment_date->month : null;
+            $originalYear = $sale->payment_date ? $sale->payment_date->year : null;
+
+            $sale->update([
+                'total_amount' => $validated['total_amount'],
+                'shipping_amount' => $validated['shipping_amount'],
+                'received_amount' => $validated['received_amount'],
+                'payment_date' => $validated['payment_date'],
+                'corrected_by' => auth()->id(),
+                'corrected_at' => now(),
+                'correction_reason' => $validated['correction_reason'],
+                'original_status' => $originalStatus,
+            ]);
+
+            if ($originalMonth && $originalYear) {
+                $this->commissionService->recalculateMonthlyCommissions(
+                    $sale->user,
+                    $originalMonth,
+                    $originalYear
+                );
+            }
+
+            $newMonth = $sale->payment_date->month;
+            $newYear = $sale->payment_date->year;
+            if ($newMonth !== $originalMonth || $newYear !== $originalYear) {
+                $this->commissionService->recalculateMonthlyCommissions(
+                    $sale->user,
+                    $newMonth,
+                    $newYear
+                );
+            }
+        });
+
+        return back()->with('success', 'Venda corrigida com sucesso.');
+    }
+
+    public function cancel(Request $request, Sale $sale)
+    {
+        $validated = $request->validate([
+            'correction_reason' => 'required|string|max:1000',
+        ]);
+
+        DB::transaction(function () use ($sale, $validated) {
+            $originalStatus = $sale->status;
+            $originalMonth = $sale->payment_date ? $sale->payment_date->month : null;
+            $originalYear = $sale->payment_date ? $sale->payment_date->year : null;
+
+            $sale->update([
+                'status' => 'cancelado',
+                'corrected_by' => auth()->id(),
+                'corrected_at' => now(),
+                'correction_reason' => $validated['correction_reason'],
+                'original_status' => $originalStatus,
+            ]);
+
+            if ($originalMonth && $originalYear) {
+                $this->commissionService->recalculateMonthlyCommissions(
+                    $sale->user,
+                    $originalMonth,
+                    $originalYear
+                );
+            }
+        });
+
+        return back()->with('success', 'Venda cancelada com sucesso.');
+    }
 }

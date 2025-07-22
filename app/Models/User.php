@@ -23,6 +23,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'approved',
+        'approved_at',
+        'approved_by',
     ];
 
     /**
@@ -45,6 +48,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'approved' => 'boolean',
+            'approved_at' => 'datetime',
         ];
     }
 
@@ -76,6 +81,21 @@ class User extends Authenticatable
     public function commissions(): HasMany
     {
         return $this->hasMany(Commission::class);
+    }
+
+    public function fines(): HasMany
+    {
+        return $this->hasMany(Fine::class);
+    }
+
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->approved || $this->isAdmin() || $this->isFinanceiro();
     }
 
     public function getMonthlyCommissionTotal(int $month, int $year): float

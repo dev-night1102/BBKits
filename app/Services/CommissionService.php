@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Sale;
 use App\Models\Commission;
 use App\Models\CommissionRange;
+use App\Models\Fine;
 
 class CommissionService
 {
@@ -165,18 +166,20 @@ class CommissionService
             $minimumRate = $this->calculateCommissionRate(self::INDIVIDUAL_MINIMUM);
             $potentialCommission = self::INDIVIDUAL_MINIMUM * ($minimumRate / 100);
             $opportunityAlert = [
-                'message' => "Se você atingir R$ " . number_format(self::INDIVIDUAL_MINIMUM, 2, ',', '.') . 
+                'message' => "Se você atingir R$ " . number_format(self::INDIVIDUAL_MINIMUM, 2, '.', ',') . 
                            " até o final do mês, você poderá ganhar R$ " . 
-                           number_format($potentialCommission, 2, ',', '.') . 
+                           number_format($potentialCommission, 2, '.', ',') . 
                            " de comissão! Não perca essa chance!",
                 'amount_needed' => $amountNeeded,
                 'potential_commission' => $potentialCommission,
             ];
         }
 
+        $fineDeductions = $this->calculateFineDeductions($user, $month, $year);
+
         return [
             'monthly_total' => $monthlyTotal,
-            'commission_total' => $commission,
+            'commission_total' => max($commission - $fineDeductions['total_deductions'], 0),
             'progress_percentage' => min($progress, 100),
             'remaining_to_goal' => max(self::INDIVIDUAL_MINIMUM - $commissionBase, 0),
             'current_rate' => $this->calculateCommissionRate($commissionBase),
@@ -184,6 +187,64 @@ class CommissionService
             'potential_earnings' => $potentialEarnings,
             'opportunity_alert' => $opportunityAlert,
             'commission_ranges' => $this->getCommissionRanges(),
+            'fine_deductions' => $fineDeductions,
         ];
+    }
+
+    public function calculateFineDeductions(User $user, int $month, int $year): array
+    {
+        $fines = $user->fines()
+            ->where('status', 'active')
+            ->whereYear('applied_at', $year)
+            ->whereMonth('applied_at', $month)
+            ->get();
+
+        $commissionOnlyDeductions = 0;
+        $additionalDeductions = 0;
+        $outstandingBalance = 0;
+
+        foreach ($fines as $fine) {
+            if ($fine->type === 'commission_only') {
+                $commissionOnlyDeductions += $fine->amount;
+            } else {
+                $additionalDeductions += $fine->amount;
+                $outstandingBalance += $fine->outstanding_balance;
+            }
+        }
+
+        return [
+            'commission_only' => $commissionOnlyDeductions,
+            'additional' => $additionalDeductions,
+            'outstanding_balance' => $outstandingBalance,
+            'total_deductions' => $commissionOnlyDeductions + $additionalDeductions,
+            'fines_count' => $fines->count(),
+        ];
+    }
+
+    public function applyFineDeductions(User $user, float $commissionAmount, int $month, int $year): float
+    {
+        $outstandingFines = $user->fines()
+            ->where('status', 'active')
+            ->where('outstanding_balance', '>', 0)
+            ->orderBy('applied_at')
+            ->get();
+
+        $remainingCommission = $commissionAmount;
+
+        foreach ($outstandingFines as $fine) {
+            if ($remainingCommission <= 0) break;
+
+            $deductionAmount = min($remainingCommission, $fine->outstanding_balance);
+            
+            $fine->outstanding_balance -= $deductionAmount;
+            if ($fine->outstanding_balance <= 0) {
+                $fine->status = 'paid';
+            }
+            $fine->save();
+
+            $remainingCommission -= $deductionAmount;
+        }
+
+        return max($remainingCommission, 0);
     }
 }

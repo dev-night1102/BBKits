@@ -8,6 +8,7 @@ use App\Http\Controllers\AdminReportsController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\CommissionRangeController;
+use App\Http\Controllers\FineController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -140,9 +141,13 @@ Route::get('/dashboard', function () {
         \Log::error('Dashboard Error: ' . $e->getMessage());
         return Inertia::render('Dashboard');
     }
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', 'approved'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::get('/pending-approval', function () {
+    return Inertia::render('Auth/PendingApproval');
+})->middleware('auth')->name('pending-approval');
+
+Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -180,6 +185,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/commission-ranges', [CommissionRangeController::class, 'store'])->name('admin.commission-ranges.store');
         Route::put('/admin/commission-ranges/{commissionRange}', [CommissionRangeController::class, 'update'])->name('admin.commission-ranges.update');
         Route::delete('/admin/commission-ranges/{commissionRange}', [CommissionRangeController::class, 'destroy'])->name('admin.commission-ranges.destroy');
+        
+        // Fine Management routes
+        Route::resource('/admin/fines', FineController::class, ['as' => 'admin']);
+        Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users.index');
+        Route::put('/admin/users/{user}/approve', [AdminController::class, 'approveUser'])->name('admin.users.approve');
+        Route::put('/admin/users/{user}/reject', [AdminController::class, 'rejectUser'])->name('admin.users.reject');
+        
+        // Sale correction routes
+        Route::put('/admin/sales/{sale}/correct', [SaleController::class, 'correct'])->name('admin.sales.correct');
+        Route::put('/admin/sales/{sale}/cancel', [SaleController::class, 'cancel'])->name('admin.sales.cancel');
     });
     
     // Sales report routes (accessible by sales users for their own reports)
