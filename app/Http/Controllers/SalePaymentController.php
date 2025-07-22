@@ -52,6 +52,10 @@ class SalePaymentController extends Controller
             $receiptPath = $request->file('receipt')->store('payment-receipts', 'public');
         }
 
+        // Auto-approve small payments or trusted sellers
+        $autoApprove = $request->amount <= 5000 || $request->user()->isAdmin();
+        $status = $autoApprove ? 'approved' : 'pending';
+
         // Create payment record
         SalePayment::create([
             'sale_id' => $sale->id,
@@ -60,10 +64,16 @@ class SalePaymentController extends Controller
             'payment_method' => $request->payment_method,
             'receipt_path' => $receiptPath,
             'notes' => $request->notes,
-            'status' => 'pending',
+            'status' => $status,
+            'approved_by' => $autoApprove ? $request->user()->id : null,
+            'approved_at' => $autoApprove ? now() : null,
         ]);
 
-        return back()->with('success', 'Pagamento registrado com sucesso e enviado para aprovação.');
+        $message = $autoApprove 
+            ? 'Pagamento registrado e aprovado automaticamente!' 
+            : 'Pagamento registrado com sucesso e enviado para aprovação.';
+        
+        return back()->with('success', $message);
     }
 
     public function approve(SalePayment $payment)
