@@ -327,12 +327,20 @@ export default function Index({ sales }) {
                                     </p>
                                 </div>
                             </div>
-                            <Link href={route('sales.create')}>
-                                <button className="btn-gradient text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition duration-300">
-                                    <i className="fas fa-plus mr-2"></i>
-                                    Nova Venda
-                                </button>
-                            </Link>
+                            <div className="flex gap-2">
+                                <Link href={route('sales.create')}>
+                                    <button className="btn-gradient text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition duration-300">
+                                        <i className="fas fa-plus mr-2"></i>
+                                        Nova Venda
+                                    </button>
+                                </Link>
+                                <Link href={route('sales.create-expanded')}>
+                                    <button className="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition duration-300 border-2 border-white/50 hover:bg-white/30">
+                                        <i className="fas fa-plus-circle mr-2"></i>
+                                        Nova Venda Completa
+                                    </button>
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 }
@@ -443,6 +451,20 @@ export default function Index({ sales }) {
                                                                     <i className="fas fa-dollar-sign mr-1"></i>
                                                                     Pagamentos
                                                                 </Link>
+                                                                {sale.unique_token && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const url = `${window.location.origin}/pedido/${sale.unique_token}`;
+                                                                            navigator.clipboard.writeText(url);
+                                                                            toast.success('Link do cliente copiado!');
+                                                                        }}
+                                                                        className="action-btn bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                                                                        title="Copiar link do cliente"
+                                                                    >
+                                                                        <i className="fas fa-link mr-1"></i>
+                                                                        Link
+                                                                    </button>
+                                                                )}
                                                                 {sale.status === 'pendente' && (
                                                                     <>
                                                                         <Link 
