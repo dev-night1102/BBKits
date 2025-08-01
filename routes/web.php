@@ -25,6 +25,16 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     try {
         $user = auth()->user();
+        
+        // Redirect to appropriate dashboard based on role
+        if ($user->isFinanceAdmin()) {
+            return redirect()->route('finance.dashboard');
+        }
+        
+        if ($user->isProductionAdmin()) {
+            return redirect()->route('production.dashboard');
+        }
+        
         $currentMonth = now()->month;
         $currentYear = now()->year;
         
@@ -147,11 +157,18 @@ Route::get('/pending-approval', function () {
     return Inertia::render('Auth/PendingApproval');
 })->middleware('auth')->name('pending-approval');
 
+// Public client page routes
+Route::get('/pedido/{token}', [SaleController::class, 'clientPage'])->name('sales.client-page');
+Route::post('/pedido/{token}/update-address', [SaleController::class, 'clientUpdateAddress'])->name('sales.client.update-address');
+Route::post('/pedido/{token}/upload-payment', [SaleController::class, 'clientUploadPayment'])->name('sales.client.upload-payment');
+Route::post('/pedido/{token}/approve-photo', [SaleController::class, 'clientApprovePhoto'])->name('sales.client.approve-photo');
+
 Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
+    Route::get('/sales/create-expanded', [SaleController::class, 'createExpanded'])->name('sales.create-expanded');
     Route::resource('sales', SaleController::class);
     
     // Payment routes
@@ -161,6 +178,33 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::put('/payments/{payment}/reject', [SalePaymentController::class, 'reject'])->name('payments.reject');
     Route::delete('/payments/{payment}', [SalePaymentController::class, 'destroy'])->name('payments.destroy');
     
+    // Finance Admin routes
+    Route::middleware(function ($request, $next) {
+        if (!auth()->user()->canApprovePayments()) {
+            abort(403);
+        }
+        return $next($request);
+    })->prefix('finance')->name('finance.')->group(function () {
+        Route::get('/orders', [\App\Http\Controllers\FinanceController::class, 'ordersIndex'])->name('orders.index');
+        Route::post('/orders/{sale}/approve', [\App\Http\Controllers\FinanceController::class, 'approveOrder'])->name('orders.approve');
+        Route::post('/orders/{sale}/reject', [\App\Http\Controllers\FinanceController::class, 'rejectOrder'])->name('orders.reject');
+        Route::get('/dashboard', [\App\Http\Controllers\FinanceController::class, 'dashboard'])->name('dashboard');
+    });
+
+    // Production Admin routes
+    Route::middleware(function ($request, $next) {
+        if (!auth()->user()->canManageProduction()) {
+            abort(403);
+        }
+        return $next($request);
+    })->prefix('production')->name('production.')->group(function () {
+        Route::get('/orders', [\App\Http\Controllers\ProductionController::class, 'ordersIndex'])->name('orders.index');
+        Route::post('/orders/{sale}/start', [\App\Http\Controllers\ProductionController::class, 'startProduction'])->name('orders.start');
+        Route::post('/orders/{sale}/upload-photo', [\App\Http\Controllers\ProductionController::class, 'uploadPhoto'])->name('orders.upload-photo');
+        Route::post('/orders/{sale}/generate-shipping', [\App\Http\Controllers\ProductionController::class, 'generateShippingLabel'])->name('orders.generate-shipping');
+        Route::get('/dashboard', [\App\Http\Controllers\ProductionController::class, 'dashboard'])->name('dashboard');
+    });
+
     // Admin routes
     Route::middleware('admin')->group(function () {
         Route::get('/admin/sales', [SaleController::class, 'adminIndex'])->name('admin.sales.index');
@@ -171,6 +215,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::post('/admin/sales/{sale}/approve-queue', [SaleController::class, 'approveWithQueue'])->name('admin.sales.approve.queue');
         Route::post('/admin/sales/{sale}/reject-queue', [SaleController::class, 'rejectWithQueue'])->name('admin.sales.reject.queue');
         Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        Route::get('/admin/enhanced-dashboard', [AdminController::class, 'dashboard'])->name('admin.enhanced-dashboard');
         
         // Reports routes
         Route::get('/admin/reports', [AdminReportsController::class, 'index'])->name('admin.reports.index');
@@ -179,6 +224,8 @@ Route::middleware(['auth', 'approved'])->group(function () {
         // Excel Export routes
         Route::get('/admin/export/sales', [ExportController::class, 'exportSales'])->name('admin.export.sales');
         Route::get('/admin/export/commissions', [ExportController::class, 'exportCommissions'])->name('admin.export.commissions');
+        Route::get('/admin/export/order-lifecycle', [ExportController::class, 'exportOrderLifecycle'])->name('admin.export.order-lifecycle');
+        Route::get('/admin/export/performance-metrics', [ExportController::class, 'exportPerformanceMetrics'])->name('admin.export.performance-metrics');
         
         // Commission Range Management routes
         Route::get('/admin/commission-ranges', [CommissionRangeController::class, 'index'])->name('admin.commission-ranges.index');
@@ -188,6 +235,17 @@ Route::middleware(['auth', 'approved'])->group(function () {
         
         // Fine Management routes
         Route::resource('/admin/fines', FineController::class, ['as' => 'admin']);
+        
+        // Integration Management routes
+        Route::get('/admin/integrations', [\App\Http\Controllers\IntegrationController::class, 'index'])->name('admin.integrations.index');
+        Route::get('/admin/integrations/logs', [\App\Http\Controllers\IntegrationController::class, 'logs'])->name('admin.integrations.logs');
+        Route::post('/admin/integrations/test-tiny-erp', [\App\Http\Controllers\IntegrationController::class, 'testTinyErp'])->name('admin.integrations.test-tiny-erp');
+        Route::post('/admin/integrations/test-whatsapp', [\App\Http\Controllers\IntegrationController::class, 'testWhatsApp'])->name('admin.integrations.test-whatsapp');
+        Route::post('/admin/integrations/generate-invoice/{sale}', [\App\Http\Controllers\IntegrationController::class, 'generateInvoice'])->name('admin.integrations.generate-invoice');
+        Route::post('/admin/integrations/generate-shipping/{sale}', [\App\Http\Controllers\IntegrationController::class, 'generateShippingLabel'])->name('admin.integrations.generate-shipping');
+        Route::post('/admin/integrations/send-whatsapp/{sale}', [\App\Http\Controllers\IntegrationController::class, 'sendWhatsAppMessage'])->name('admin.integrations.send-whatsapp');
+        Route::post('/admin/integrations/sync-order/{sale}', [\App\Http\Controllers\IntegrationController::class, 'syncOrderStatus'])->name('admin.integrations.sync-order');
+        Route::post('/admin/integrations/bulk-sync', [\App\Http\Controllers\IntegrationController::class, 'bulkSyncOrders'])->name('admin.integrations.bulk-sync');
         Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users.index');
         Route::put('/admin/users/{user}/approve', [AdminController::class, 'approveUser'])->name('admin.users.approve');
         Route::put('/admin/users/{user}/reject', [AdminController::class, 'rejectUser'])->name('admin.users.reject');

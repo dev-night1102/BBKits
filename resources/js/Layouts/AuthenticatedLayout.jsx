@@ -456,6 +456,38 @@ export default function AuthenticatedLayout({ header, children }) {
                                         💼 Vendas
                                     </NavLink>
 
+                                    {/* Finance Admin Navigation */}
+                                    {(user.role === "finance_admin" || user.role === "admin") && (
+                                        <NavLink
+                                            href={route("finance.orders.index")}
+                                            active={route().current("finance.*")}
+                                            className={`nav-link flex items-center gap-2 ${
+                                                route().current("finance.*") ? "active" : ""
+                                            }`}
+                                        >
+                                            <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                            </svg>
+                                            💰 Financeiro
+                                        </NavLink>
+                                    )}
+
+                                    {/* Production Admin Navigation */}
+                                    {(user.role === "production_admin" || user.role === "admin") && (
+                                        <NavLink
+                                            href={route("production.orders.index")}
+                                            active={route().current("production.*")}
+                                            className={`nav-link flex items-center gap-2 ${
+                                                route().current("production.*") ? "active" : ""
+                                            }`}
+                                        >
+                                            <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 7.172V5L8 4z" />
+                                            </svg>
+                                            🏭 Produção
+                                        </NavLink>
+                                    )}
+
                                     {(user.role === "admin" ||
                                         user.role === "financeiro") && (
                                         <>
@@ -738,6 +770,34 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </svg>
                                 💼 Minhas Vendas
                             </ResponsiveNavLink>
+
+                            {/* Finance Admin Mobile Navigation */}
+                            {(user.role === "finance_admin" || user.role === "admin") && (
+                                <ResponsiveNavLink
+                                    href={route("finance.orders.index")}
+                                    active={route().current("finance.*")}
+                                    className="mobile-nav-item flex items-center gap-3 px-4 py-3 rounded-xl"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                    </svg>
+                                    💰 Financeiro
+                                </ResponsiveNavLink>
+                            )}
+
+                            {/* Production Admin Mobile Navigation */}
+                            {(user.role === "production_admin" || user.role === "admin") && (
+                                <ResponsiveNavLink
+                                    href={route("production.orders.index")}
+                                    active={route().current("production.*")}
+                                    className="mobile-nav-item flex items-center gap-3 px-4 py-3 rounded-xl"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 7.172V5L8 4z" />
+                                    </svg>
+                                    🏭 Produção
+                                </ResponsiveNavLink>
+                            )}
 
                             {(user.role === "admin" ||
                                 user.role === "financeiro") && (

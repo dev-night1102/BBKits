@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Sale;
+use App\Observers\SaleObserver;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -28,5 +30,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Optional Vite optimization
         Vite::prefetch(concurrency: 3);
+        
+        // Register model observers
+        Sale::observe(SaleObserver::class);
     }
 }

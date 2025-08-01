@@ -41,16 +41,43 @@ class SaleController extends Controller
         return Inertia::render('Sales/Create');
     }
 
+    public function createExpanded()
+    {
+        return Inertia::render('Sales/CreateExpanded');
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
+            // Client info
             'client_name' => 'required|string|max:255',
+            'client_email' => 'nullable|email|max:255',
+            'client_phone' => 'nullable|string|max:20',
+            'client_cpf' => 'nullable|string|max:14',
+            
+            // Child & embroidery
+            'child_name' => 'nullable|string|max:255',
+            'embroidery_position' => 'nullable|in:top,bottom,left,right,center',
+            'embroidery_color' => 'nullable|string|max:50',
+            'embroidery_font' => 'nullable|string|max:50',
+            
+            // Payment
             'total_amount' => 'required|numeric|min:0',
             'shipping_amount' => 'required|numeric|min:0',
             'payment_method' => 'required|in:pix,boleto,cartao,dinheiro',
             'received_amount' => 'required|numeric|min:0',
             'payment_date' => 'required|date',
             'payment_receipt' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            
+            // Delivery address
+            'delivery_address' => 'nullable|string|max:255',
+            'delivery_number' => 'nullable|string|max:20',
+            'delivery_complement' => 'nullable|string|max:100',
+            'delivery_neighborhood' => 'nullable|string|max:100',
+            'delivery_city' => 'nullable|string|max:100',
+            'delivery_state' => 'nullable|string|max:2',
+            'delivery_zipcode' => 'nullable|string|max:10',
+            
             'notes' => 'nullable|string'
         ]);
 
@@ -62,16 +89,35 @@ class SaleController extends Controller
             // Store as base64 data URL
             $validated['receipt_data'] = 'data:' . $mimeType . ';base64,' . base64_encode($fileContent);
             
+            // If this is the initial payment proof, also store it in the new field
+            $validated['initial_payment_proof_data'] = $validated['receipt_data'];
+            
             // Still store the file path for backward compatibility
             $validated['payment_receipt'] = $request->file('payment_receipt')->store('receipts', 'public');
+            $validated['initial_payment_proof'] = $validated['payment_receipt'];
         }
 
         $validated['user_id'] = auth()->id();
         $validated['status'] = 'pendente';
+        
+        // Set initial order status based on payment
+        if ($validated['received_amount'] >= $validated['total_amount']) {
+            $validated['order_status'] = 'pending_payment'; // Will be approved by finance
+        } else {
+            $validated['order_status'] = 'pending_payment'; // Partial payment
+        }
 
         $sale = Sale::create($validated);
         
         $this->notificationService->notifyNewSale($sale);
+
+        // Return with personalized page URL if client email exists
+        if ($sale->client_email) {
+            return redirect()->route('sales.index')->with([
+                'message' => 'Venda registrada com sucesso!',
+                'client_url' => $sale->getPersonalizedPageUrl()
+            ]);
+        }
 
         return redirect()->route('sales.index')->with('message', 'Venda registrada com sucesso!');
     }
@@ -176,8 +222,11 @@ class SaleController extends Controller
             
             $sale->update([
                 'status' => 'aprovado',
+                'order_status' => 'payment_approved', // Move to new workflow
                 'approved_by' => auth()->id(),
-                'approved_at' => now()
+                'approved_at' => now(),
+                'finance_admin_id' => auth()->id(),
+                'initial_payment_approved_at' => now()
             ]);
             
             // Create commission record
@@ -420,5 +469,96 @@ class SaleController extends Controller
         });
 
         return back()->with('success', 'Venda cancelada com sucesso.');
+    }
+
+    // Public client page
+    public function clientPage($token)
+    {
+        $sale = Sale::where('unique_token', $token)->firstOrFail();
+        
+        return Inertia::render('Sales/ClientPage', [
+            'sale' => $sale->load(['user', 'productionAdmin', 'financeAdmin']),
+            'orderStatus' => $sale->getOrderStatusLabel(),
+            'orderStatusColor' => $sale->getOrderStatusColor(),
+            'remainingAmount' => $sale->getRemainingAmount(),
+            'needsFinalPayment' => $sale->needsFinalPayment(),
+            'productPhotoUrl' => $sale->getProductPhotoUrl()
+        ]);
+    }
+
+    public function clientUpdateAddress(Request $request, $token)
+    {
+        $sale = Sale::where('unique_token', $token)->firstOrFail();
+        
+        $validated = $request->validate([
+            'delivery_address' => 'required|string|max:255',
+            'delivery_number' => 'required|string|max:20',
+            'delivery_complement' => 'nullable|string|max:100',
+            'delivery_neighborhood' => 'required|string|max:100',
+            'delivery_city' => 'required|string|max:100',
+            'delivery_state' => 'required|string|max:2',
+            'delivery_zipcode' => 'required|string|max:10'
+        ]);
+        
+        $sale->update($validated);
+        
+        return back()->with('message', 'Endereço atualizado com sucesso!');
+    }
+
+    public function clientUploadPayment(Request $request, $token)
+    {
+        $sale = Sale::where('unique_token', $token)->firstOrFail();
+        
+        $validated = $request->validate([
+            'final_payment_proof' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048'
+        ]);
+        
+        if ($request->hasFile('final_payment_proof')) {
+            $file = $request->file('final_payment_proof');
+            $fileContent = file_get_contents($file->getRealPath());
+            $mimeType = $file->getMimeType();
+            
+            $sale->final_payment_proof_data = 'data:' . $mimeType . ';base64,' . base64_encode($fileContent);
+            $sale->final_payment_proof = $file->store('receipts', 'public');
+            $sale->save();
+            
+            // Notify admin about new payment proof
+            $this->notificationService->notifyPaymentUploaded($sale);
+        }
+        
+        return back()->with('message', 'Comprovante enviado com sucesso!');
+    }
+
+    public function clientApprovePhoto(Request $request, $token)
+    {
+        $sale = Sale::where('unique_token', $token)->firstOrFail();
+        
+        if ($sale->order_status !== 'photo_sent') {
+            return back()->withErrors(['error' => 'Foto não está disponível para aprovação']);
+        }
+        
+        $validated = $request->validate([
+            'approved' => 'required|boolean',
+            'reason' => 'required_if:approved,false|string|max:500'
+        ]);
+        
+        if ($validated['approved']) {
+            $sale->update([
+                'photo_approved_at' => now(),
+                'order_status' => $sale->needsFinalPayment() ? 'pending_final_payment' : 'ready_for_shipping'
+            ]);
+            
+            $this->notificationService->notifyPhotoApproved($sale);
+        } else {
+            $sale->update([
+                'photo_rejected_at' => now(),
+                'photo_rejection_reason' => $validated['reason'],
+                'order_status' => 'in_production' // Back to production for adjustments
+            ]);
+            
+            $this->notificationService->notifyPhotoRejected($sale, $validated['reason']);
+        }
+        
+        return back()->with('message', $validated['approved'] ? 'Foto aprovada!' : 'Solicitação de ajuste enviada');
     }
 }

@@ -13,44 +13,106 @@ use App\Services\CommissionService;
 
 class AdminController extends Controller
 {
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'financeiro') {
             abort(403, 'Unauthorized');
         }
 
         $commissionService = new CommissionService();
-        $currentMonth = Carbon::now()->month;
-        $currentYear = Carbon::now()->year;
+        $currentMonth = $request->get('month', Carbon::now()->month);
+        $currentYear = $request->get('year', Carbon::now()->year);
+        $dateFilter = $request->get('date_filter', 'current_month');
+        $statusFilter = $request->get('status_filter', 'all');
         
-        // Basic stats
-        $stats = [
+        // Date range calculations
+        $dateRange = $this->getDateRange($dateFilter, $currentMonth, $currentYear);
+        
+        // Basic stats with filters
+        $statsQuery = Sale::query();
+        
+        // Apply date filter
+        if ($dateFilter === 'current_month') {
+            $statsQuery->whereYear('payment_date', $currentYear)
+                      ->whereMonth('payment_date', $currentMonth);
+        } elseif ($dateFilter === 'last_month') {
+            $lastMonth = Carbon::now()->subMonth();
+            $statsQuery->whereYear('payment_date', $lastMonth->year)
+                      ->whereMonth('payment_date', $lastMonth->month);
+        } elseif ($dateFilter === 'last_7_days') {
+            $statsQuery->where('payment_date', '>=', Carbon::now()->subDays(7));
+        } elseif ($dateFilter === 'last_30_days') {
+            $statsQuery->where('payment_date', '>=', Carbon::now()->subDays(30));
+        } elseif ($dateFilter === 'custom' && $request->has(['start_date', 'end_date'])) {
+            $statsQuery->whereBetween('payment_date', [$request->start_date, $request->end_date]);
+        }
+        
+        // Apply status filter
+        if ($statusFilter !== 'all') {
+            $statsQuery->where('status', $statusFilter);
+        }
+        
+        // Legacy stats (for backward compatibility)
+        $legacyStats = [
             'totalSellers' => User::where('role', 'vendedora')->count(),
-            'monthlyRevenue' => Sale::where('status', 'aprovado')
-                ->whereYear('payment_date', $currentYear)
-                ->whereMonth('payment_date', $currentMonth)
-                ->sum('received_amount'),
+            'monthlyRevenue' => (clone $statsQuery)->where('status', 'aprovado')->sum('received_amount'),
             'pendingSales' => Sale::where('status', 'pendente')->count(),
-            'approvedSales' => Sale::where('status', 'aprovado')
-                ->whereYear('payment_date', $currentYear)
-                ->whereMonth('payment_date', $currentMonth)
-                ->count(),
-            'totalSalesCount' => Sale::whereYear('payment_date', $currentYear)
-                ->whereMonth('payment_date', $currentMonth)
-                ->count(),
+            'approvedSales' => (clone $statsQuery)->where('status', 'aprovado')->count(),
+            'totalSalesCount' => (clone $statsQuery)->count(),
             'monthlyTarget' => 200000, // R$ 200k monthly target
         ];
+        
+        // Enhanced order lifecycle stats
+        $orderLifecycleStats = [
+            'pending_payment' => Sale::where('order_status', 'pending_payment')->count(),
+            'payment_approved' => Sale::where('order_status', 'payment_approved')->count(),
+            'in_production' => Sale::where('order_status', 'in_production')->count(),
+            'photo_sent' => Sale::where('order_status', 'photo_sent')->count(),
+            'photo_approved' => Sale::where('order_status', 'photo_approved')->count(),
+            'pending_final_payment' => Sale::where('order_status', 'pending_final_payment')->count(),
+            'ready_for_shipping' => Sale::where('order_status', 'ready_for_shipping')->count(),
+            'shipped' => Sale::where('order_status', 'shipped')->count(),
+        ];
+        
+        // Performance metrics
+        $performanceMetrics = $this->calculatePerformanceMetrics($dateFilter);
+        
+        // Bottleneck identification
+        $bottlenecks = $this->identifyBottlenecks();
+        
+        // Combine stats
+        $stats = array_merge($legacyStats, [
+            'orderLifecycle' => $orderLifecycleStats,
+            'performance' => $performanceMetrics,
+            'bottlenecks' => $bottlenecks,
+            'dateFilter' => $dateFilter,
+            'statusFilter' => $statusFilter,
+            'currentMonth' => $currentMonth,
+            'currentYear' => $currentYear,
+        ]);
 
         // Calculate monthly commissions using CommissionService
         $monthlyCommissions = 0;
         $sellers = User::where('role', 'vendedora')->get();
         
         foreach ($sellers as $seller) {
-            $sellerMonthlyTotal = Sale::where('user_id', $seller->id)
-                ->where('status', 'aprovado')
-                ->whereYear('payment_date', $currentYear)
-                ->whereMonth('payment_date', $currentMonth)
-                ->get()
+            $sellerQuery = Sale::where('user_id', $seller->id)->where('status', 'aprovado');
+            
+            // Apply same date filter as stats
+            if ($dateFilter === 'current_month') {
+                $sellerQuery->whereYear('payment_date', $currentYear)
+                           ->whereMonth('payment_date', $currentMonth);
+            } elseif ($dateFilter === 'last_month') {
+                $lastMonth = Carbon::now()->subMonth();
+                $sellerQuery->whereYear('payment_date', $lastMonth->year)
+                           ->whereMonth('payment_date', $lastMonth->month);
+            } elseif ($dateFilter === 'last_7_days') {
+                $sellerQuery->where('payment_date', '>=', Carbon::now()->subDays(7));
+            } elseif ($dateFilter === 'last_30_days') {
+                $sellerQuery->where('payment_date', '>=', Carbon::now()->subDays(30));
+            }
+            
+            $sellerMonthlyTotal = $sellerQuery->get()
                 ->sum(function ($sale) {
                     return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
                 });
@@ -61,33 +123,55 @@ class AdminController extends Controller
 
         $stats['monthlyCommissions'] = $monthlyCommissions;
 
-        // Top performers this month
-        $topPerformers = User::where('role', 'vendedora')
-            ->withCount([
-                'sales as sales_count' => function ($query) use ($currentYear, $currentMonth) {
-                    $query->where('status', 'aprovado')
-                        ->whereYear('payment_date', $currentYear)
-                        ->whereMonth('payment_date', $currentMonth);
-                }
-            ])
-            ->withSum([
-                'sales as total_revenue' => function ($query) use ($currentYear, $currentMonth) {
-                    $query->where('status', 'aprovado')
-                        ->whereYear('payment_date', $currentYear)
-                        ->whereMonth('payment_date', $currentMonth);
-                }
-            ], 'received_amount')
-            // ->having('sales_count', '>', 0)
+        // Top performers with dynamic date filtering
+        $topPerformersQuery = User::where('role', 'vendedora');
+        
+        // Apply date filter for top performers
+        $salesCountFilter = function ($query) use ($dateFilter, $currentYear, $currentMonth, $request) {
+            $query->where('status', 'aprovado');
+            if ($dateFilter === 'current_month') {
+                $query->whereYear('payment_date', $currentYear)
+                      ->whereMonth('payment_date', $currentMonth);
+            } elseif ($dateFilter === 'last_month') {
+                $lastMonth = Carbon::now()->subMonth();
+                $query->whereYear('payment_date', $lastMonth->year)
+                      ->whereMonth('payment_date', $lastMonth->month);
+            } elseif ($dateFilter === 'last_7_days') {
+                $query->where('payment_date', '>=', Carbon::now()->subDays(7));
+            } elseif ($dateFilter === 'last_30_days') {
+                $query->where('payment_date', '>=', Carbon::now()->subDays(30));
+            } elseif ($dateFilter === 'custom' && $request->has(['start_date', 'end_date'])) {
+                $query->whereBetween('payment_date', [$request->start_date, $request->end_date]);
+            }
+        };
+        
+        $topPerformers = $topPerformersQuery
+            ->withCount(['sales as sales_count' => $salesCountFilter])
+            ->withSum(['sales as total_revenue' => $salesCountFilter], 'received_amount')
             ->orderBy('total_revenue', 'desc')
-            ->limit(5)
+            ->limit(10) // Increased from 5 to 10 for better analytics
             ->get()
-            ->map(function ($user) use ($commissionService, $currentYear, $currentMonth) {
+            ->map(function ($user) use ($commissionService, $dateFilter, $currentYear, $currentMonth, $request) {
                 // Calculate commission for each top performer using CommissionService
-                $commissionBase = Sale::where('user_id', $user->id)
-                    ->where('status', 'aprovado')
-                    ->whereYear('payment_date', $currentYear)
-                    ->whereMonth('payment_date', $currentMonth)
-                    ->get()
+                $commissionQuery = Sale::where('user_id', $user->id)->where('status', 'aprovado');
+                
+                // Apply same date filter
+                if ($dateFilter === 'current_month') {
+                    $commissionQuery->whereYear('payment_date', $currentYear)
+                                   ->whereMonth('payment_date', $currentMonth);
+                } elseif ($dateFilter === 'last_month') {
+                    $lastMonth = Carbon::now()->subMonth();
+                    $commissionQuery->whereYear('payment_date', $lastMonth->year)
+                                   ->whereMonth('payment_date', $lastMonth->month);
+                } elseif ($dateFilter === 'last_7_days') {
+                    $commissionQuery->where('payment_date', '>=', Carbon::now()->subDays(7));
+                } elseif ($dateFilter === 'last_30_days') {
+                    $commissionQuery->where('payment_date', '>=', Carbon::now()->subDays(30));
+                } elseif ($dateFilter === 'custom' && $request->has(['start_date', 'end_date'])) {
+                    $commissionQuery->whereBetween('payment_date', [$request->start_date, $request->end_date]);
+                }
+                
+                $commissionBase = $commissionQuery->get()
                     ->sum(function ($sale) {
                         return ($sale->received_amount ?: 0) - ($sale->shipping_amount ?: 0);
                     });
@@ -122,11 +206,48 @@ class AdminController extends Controller
             ];
         }
 
-        return Inertia::render('Admin/Dashboard', [
+        // Filter options for the frontend
+        $filterOptions = [
+            'dateFilters' => [
+                'current_month' => 'Mês Atual',
+                'last_month' => 'Mês Passado',
+                'last_7_days' => 'Últimos 7 dias',
+                'last_30_days' => 'Últimos 30 dias',
+                'custom' => 'Período personalizado'
+            ],
+            'statusFilters' => [
+                'all' => 'Todos os Status',
+                'pendente' => 'Pendente',
+                'aprovado' => 'Aprovado',
+                'recusado' => 'Rejeitado'
+            ],
+            'orderStatusFilters' => [
+                'all' => 'Todos os Pedidos',
+                'pending_payment' => 'Aguardando Pagamento',
+                'payment_approved' => 'Pagamento Aprovado',
+                'in_production' => 'Em Produção',
+                'photo_sent' => 'Foto Enviada',
+                'photo_approved' => 'Foto Aprovada',
+                'pending_final_payment' => 'Pagamento Final Pendente',
+                'ready_for_shipping' => 'Pronto para Envio',
+                'shipped' => 'Enviado'
+            ]
+        ];
+
+        return Inertia::render('Admin/EnhancedDashboard', [
             'stats' => $stats,
             'topPerformers' => $topPerformers,
             'recentSales' => $recentSales,
             'monthlyData' => $monthlyData,
+            'filterOptions' => $filterOptions,
+            'currentFilters' => [
+                'date_filter' => $dateFilter,
+                'status_filter' => $statusFilter,
+                'month' => $currentMonth,
+                'year' => $currentYear,
+                'start_date' => $request->get('start_date'),
+                'end_date' => $request->get('end_date')
+            ]
         ]);
     }
     
@@ -173,5 +294,175 @@ class AdminController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Aprovação do usuário revogada.');
+    }
+    
+    /**
+     * Get date range based on filter
+     */
+    private function getDateRange($dateFilter, $currentMonth, $currentYear)
+    {
+        switch ($dateFilter) {
+            case 'current_month':
+                return [
+                    'start' => Carbon::create($currentYear, $currentMonth, 1)->startOfMonth(),
+                    'end' => Carbon::create($currentYear, $currentMonth, 1)->endOfMonth()
+                ];
+            case 'last_month':
+                $lastMonth = Carbon::now()->subMonth();
+                return [
+                    'start' => $lastMonth->startOfMonth(),
+                    'end' => $lastMonth->endOfMonth()
+                ];
+            case 'last_7_days':
+                return [
+                    'start' => Carbon::now()->subDays(7),
+                    'end' => Carbon::now()
+                ];
+            case 'last_30_days':
+                return [
+                    'start' => Carbon::now()->subDays(30),
+                    'end' => Carbon::now()
+                ];
+            default:
+                return [
+                    'start' => Carbon::create($currentYear, $currentMonth, 1)->startOfMonth(),
+                    'end' => Carbon::create($currentYear, $currentMonth, 1)->endOfMonth()
+                ];
+        }
+    }
+    
+    /**
+     * Calculate performance metrics
+     */
+    private function calculatePerformanceMetrics($dateFilter)
+    {
+        // Average order processing time
+        $avgProcessingTime = Sale::whereNotNull('shipped_at')
+            ->whereNotNull('created_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(DAY, created_at, shipped_at)) as avg_days')
+            ->value('avg_days') ?? 0;
+        
+        // Average time in each stage
+        $avgStageTime = [
+            'payment_to_production' => Sale::whereNotNull('production_started_at')
+                ->whereNotNull('initial_payment_approved_at')
+                ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, initial_payment_approved_at, production_started_at)) as avg_hours')
+                ->value('avg_hours') ?? 0,
+            'production_to_photo' => Sale::whereNotNull('photo_sent_at')
+                ->whereNotNull('production_started_at')
+                ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, production_started_at, photo_sent_at)) as avg_hours')
+                ->value('avg_hours') ?? 0,
+            'photo_to_shipping' => Sale::whereNotNull('shipped_at')
+                ->whereNotNull('photo_approved_at')
+                ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, photo_approved_at, shipped_at)) as avg_hours')
+                ->value('avg_hours') ?? 0,
+        ];
+        
+        // Conversion rates
+        $totalOrders = Sale::count();
+        $conversionRates = [
+            'payment_approval_rate' => $totalOrders > 0 ? 
+                (Sale::where('order_status', '!=', 'pending_payment')->count() / $totalOrders) * 100 : 0,
+            'completion_rate' => $totalOrders > 0 ? 
+                (Sale::where('order_status', 'shipped')->count() / $totalOrders) * 100 : 0,
+            'photo_approval_rate' => Sale::where('order_status', 'photo_sent')->count() > 0 ? 
+                (Sale::where('order_status', '!=', 'photo_sent')->where('photo_sent_at', '!=', null)->count() / 
+                 Sale::where('order_status', 'photo_sent')->count()) * 100 : 0,
+        ];
+        
+        // Daily/weekly trends
+        $dailyOrders = Sale::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->where('created_at', '>=', Carbon::now()->subDays(30))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+        
+        return [
+            'avg_processing_time_days' => round($avgProcessingTime, 1),
+            'avg_stage_time' => $avgStageTime,
+            'conversion_rates' => $conversionRates,
+            'daily_trends' => $dailyOrders,
+        ];
+    }
+    
+    /**
+     * Identify bottlenecks in the order process
+     */
+    private function identifyBottlenecks()
+    {
+        $bottlenecks = [];
+        
+        // Orders stuck in payment approval (>24h)
+        $stuckPayments = Sale::where('order_status', 'pending_payment')
+            ->where('created_at', '<=', Carbon::now()->subHours(24))
+            ->count();
+        if ($stuckPayments > 0) {
+            $bottlenecks[] = [
+                'type' => 'payment_approval',
+                'count' => $stuckPayments,
+                'message' => "🚨 {$stuckPayments} pedidos aguardando aprovação de pagamento há mais de 24h",
+                'severity' => $stuckPayments > 10 ? 'high' : ($stuckPayments > 5 ? 'medium' : 'low'),
+                'action_url' => '/finance/orders?status=pending_payment'
+            ];
+        }
+        
+        // Orders stuck in production (>48h)
+        $stuckProduction = Sale::where('order_status', 'in_production')
+            ->where('production_started_at', '<=', Carbon::now()->subHours(48))
+            ->count();
+        if ($stuckProduction > 0) {
+            $bottlenecks[] = [
+                'type' => 'production',
+                'count' => $stuckProduction,
+                'message' => "⏰ {$stuckProduction} pedidos em produção há mais de 48h",
+                'severity' => $stuckProduction > 5 ? 'high' : ($stuckProduction > 3 ? 'medium' : 'low'),
+                'action_url' => '/production/orders?status=in_production'
+            ];
+        }
+        
+        // Photos waiting for approval (>72h)
+        $stuckPhotos = Sale::where('order_status', 'photo_sent')
+            ->where('photo_sent_at', '<=', Carbon::now()->subHours(72))
+            ->count();
+        if ($stuckPhotos > 0) {
+            $bottlenecks[] = [
+                'type' => 'photo_approval',
+                'count' => $stuckPhotos,
+                'message' => "📸 {$stuckPhotos} fotos aguardando aprovação da cliente há mais de 72h",
+                'severity' => $stuckPhotos > 5 ? 'high' : ($stuckPhotos > 2 ? 'medium' : 'low'),
+                'action_url' => '/admin/sales?order_status=photo_sent'
+            ];
+        }
+        
+        // Final payments waiting (>24h)
+        $stuckFinalPayments = Sale::where('order_status', 'pending_final_payment')
+            ->whereNotNull('final_payment_proof_data')
+            ->where('updated_at', '<=', Carbon::now()->subHours(24))
+            ->count();
+        if ($stuckFinalPayments > 0) {
+            $bottlenecks[] = [
+                'type' => 'final_payment',
+                'count' => $stuckFinalPayments,
+                'message' => "💳 {$stuckFinalPayments} pagamentos finais aguardando aprovação há mais de 24h",
+                'severity' => $stuckFinalPayments > 5 ? 'high' : ($stuckFinalPayments > 2 ? 'medium' : 'low'),
+                'action_url' => '/finance/orders?status=pending_final_payment'
+            ];
+        }
+        
+        // Orders ready for shipping (>24h)
+        $readyToShip = Sale::where('order_status', 'ready_for_shipping')
+            ->where('final_payment_approved_at', '<=', Carbon::now()->subHours(24))
+            ->count();
+        if ($readyToShip > 0) {
+            $bottlenecks[] = [
+                'type' => 'shipping',
+                'count' => $readyToShip,
+                'message' => "📦 {$readyToShip} pedidos prontos para envio há mais de 24h",
+                'severity' => $readyToShip > 10 ? 'high' : ($readyToShip > 5 ? 'medium' : 'low'),
+                'action_url' => '/production/orders?status=ready_for_shipping'
+            ];
+        }
+        
+        return $bottlenecks;
     }
 }

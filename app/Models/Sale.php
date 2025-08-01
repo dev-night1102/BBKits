@@ -5,12 +5,38 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Sale extends Model
 {
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($sale) {
+            if (empty($sale->unique_token)) {
+                do {
+                    $token = 'BB' . strtoupper(Str::random(8));
+                } while (self::where('unique_token', $token)->exists());
+                
+                $sale->unique_token = $token;
+            }
+        });
+    }
     protected $fillable = [
         'user_id',
+        'unique_token',
         'client_name',
+        'client_email',
+        'client_phone',
+        'client_cpf',
+        'child_name',
+        'embroidery_position',
+        'embroidery_color',
+        'embroidery_font',
         'total_amount',
         'shipping_amount',
         'payment_method',
@@ -18,8 +44,13 @@ class Sale extends Model
         'payment_date',
         'payment_receipt',
         'receipt_data',
+        'initial_payment_proof',
+        'initial_payment_proof_data',
+        'final_payment_proof',
+        'final_payment_proof_data',
         'notes',
         'status',
+        'order_status',
         'admin_notes',
         'approved_by',
         'approved_at',
@@ -29,7 +60,53 @@ class Sale extends Model
         'corrected_by',
         'corrected_at',
         'correction_reason',
-        'original_status'
+        'original_status',
+        'delivery_address',
+        'delivery_number',
+        'delivery_complement',
+        'delivery_neighborhood',
+        'delivery_city',
+        'delivery_state',
+        'delivery_zipcode',
+        'production_admin_id',
+        'production_started_at',
+        'product_photo',
+        'product_photo_data',
+        'photo_sent_at',
+        'photo_approved_at',
+        'photo_rejected_at',
+        'photo_rejection_reason',
+        'finance_admin_id',
+        'initial_payment_approved_at',
+        'final_payment_approved_at',
+        'invoice_number',
+        'tracking_code',
+        'shipped_at',
+        'shipping_label',
+        // Tiny ERP fields
+        'tiny_erp_invoice_id',
+        'tiny_erp_shipping_id',
+        'invoice_generated_at',
+        'shipping_label_generated_at',
+        'shipping_label_url',
+        'tiny_erp_status',
+        'tiny_erp_error',
+        'tiny_erp_sync_at',
+        // WhatsApp fields
+        'whatsapp_confirmation_sent',
+        'whatsapp_confirmation_sent_at',
+        'whatsapp_payment_approved_sent',
+        'whatsapp_payment_approved_sent_at',
+        'whatsapp_production_started_sent',
+        'whatsapp_production_started_sent_at',
+        'whatsapp_photo_sent',
+        'whatsapp_photo_sent_at',
+        'whatsapp_shipping_sent',
+        'whatsapp_shipping_sent_at',
+        'whatsapp_payment_rejected_sent',
+        'whatsapp_payment_rejected_sent_at',
+        'whatsapp_final_payment_reminder_sent',
+        'whatsapp_final_payment_reminder_sent_at'
     ];
 
     protected $casts = [
@@ -37,6 +114,33 @@ class Sale extends Model
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
         'corrected_at' => 'datetime',
+        'production_started_at' => 'datetime',
+        'photo_sent_at' => 'datetime',
+        'photo_approved_at' => 'datetime',
+        'photo_rejected_at' => 'datetime',
+        'initial_payment_approved_at' => 'datetime',
+        'final_payment_approved_at' => 'datetime',
+        'shipped_at' => 'datetime',
+        // Tiny ERP casts
+        'invoice_generated_at' => 'datetime',
+        'shipping_label_generated_at' => 'datetime',
+        'tiny_erp_sync_at' => 'datetime',
+        // WhatsApp casts
+        'whatsapp_confirmation_sent' => 'boolean',
+        'whatsapp_confirmation_sent_at' => 'datetime',
+        'whatsapp_payment_approved_sent' => 'boolean',
+        'whatsapp_payment_approved_sent_at' => 'datetime',
+        'whatsapp_production_started_sent' => 'boolean',
+        'whatsapp_production_started_sent_at' => 'datetime',
+        'whatsapp_photo_sent' => 'boolean',
+        'whatsapp_photo_sent_at' => 'datetime',
+        'whatsapp_shipping_sent' => 'boolean',
+        'whatsapp_shipping_sent_at' => 'datetime',
+        'whatsapp_payment_rejected_sent' => 'boolean',
+        'whatsapp_payment_rejected_sent_at' => 'datetime',
+        'whatsapp_final_payment_reminder_sent' => 'boolean',
+        'whatsapp_final_payment_reminder_sent_at' => 'datetime',
+        // Existing casts
         'total_amount' => 'decimal:2',
         'shipping_amount' => 'decimal:2',
         'received_amount' => 'decimal:2',
@@ -55,6 +159,16 @@ class Sale extends Model
     public function rejectedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function productionAdmin(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'production_admin_id');
+    }
+
+    public function financeAdmin(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'finance_admin_id');
     }
 
     public function getCommissionBaseAmount(): float
@@ -170,5 +284,118 @@ class Sale extends Model
             return 0; // No commission until fully paid
         }
         return $this->getTotalPaidAmount() - $this->shipping_amount;
+    }
+
+    // Order lifecycle methods
+    public function getOrderStatusLabel(): string
+    {
+        $labels = [
+            'pending_payment' => '⏳ Aguardando Pagamento',
+            'payment_approved' => '✅ Pagamento Aprovado',
+            'in_production' => '🏭 Em Produção',
+            'photo_sent' => '📸 Foto Enviada para Aprovação',
+            'photo_approved' => '✨ Aguardando Aprovação da Cliente',
+            'pending_final_payment' => '🟠 Pagamento Final Pendente',
+            'ready_for_shipping' => '🔗 Pronto para Envio',
+            'shipped' => '🎉 Enviado'
+        ];
+        
+        return $labels[$this->order_status] ?? $this->order_status;
+    }
+
+    public function getOrderStatusColor(): string
+    {
+        $colors = [
+            'pending_payment' => 'yellow',
+            'payment_approved' => 'green',
+            'in_production' => 'blue',
+            'photo_sent' => 'purple',
+            'photo_approved' => 'indigo',
+            'pending_final_payment' => 'orange',
+            'ready_for_shipping' => 'teal',
+            'shipped' => 'green'
+        ];
+        
+        return $colors[$this->order_status] ?? 'gray';
+    }
+
+    public function canMoveToProduction(): bool
+    {
+        return $this->order_status === 'payment_approved';
+    }
+
+    public function canSendPhoto(): bool
+    {
+        return $this->order_status === 'in_production' && $this->product_photo;
+    }
+
+    public function canShip(): bool
+    {
+        return $this->order_status === 'ready_for_shipping' && $this->isFullyPaid();
+    }
+
+    public function getPersonalizedPageUrl(): string
+    {
+        return route('sales.client-page', ['token' => $this->unique_token]);
+    }
+
+    public function hasInitialPaymentProof(): bool
+    {
+        return !empty($this->initial_payment_proof_data) || !empty($this->initial_payment_proof);
+    }
+
+    public function hasFinalPaymentProof(): bool
+    {
+        return !empty($this->final_payment_proof_data) || !empty($this->final_payment_proof);
+    }
+
+    public function getInitialPaymentProofUrl(): ?string
+    {
+        if ($this->initial_payment_proof_data) {
+            return $this->initial_payment_proof_data;
+        }
+        
+        if ($this->initial_payment_proof) {
+            return asset('storage/' . $this->initial_payment_proof);
+        }
+        
+        return null;
+    }
+
+    public function getFinalPaymentProofUrl(): ?string
+    {
+        if ($this->final_payment_proof_data) {
+            return $this->final_payment_proof_data;
+        }
+        
+        if ($this->final_payment_proof) {
+            return asset('storage/' . $this->final_payment_proof);
+        }
+        
+        return null;
+    }
+
+    public function getProductPhotoUrl(): ?string
+    {
+        if ($this->product_photo_data) {
+            return $this->product_photo_data;
+        }
+        
+        if ($this->product_photo) {
+            return asset('storage/' . $this->product_photo);
+        }
+        
+        return null;
+    }
+
+    public function needsFinalPayment(): bool
+    {
+        return $this->getRemainingAmount() > 0 && in_array($this->order_status, ['photo_approved', 'pending_final_payment']);
+    }
+
+    public function isStalled(): bool
+    {
+        // Order is stalled if no update in 48 hours
+        return $this->updated_at->diffInHours(now()) > 48;
     }
 }
