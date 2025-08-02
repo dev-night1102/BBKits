@@ -38,10 +38,9 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set workdir
 WORKDIR /var/www
 
-# Copy all Laravel backend files
+# Copy Laravel backend files
 COPY . .
 
 # Create SQLite database (if used)
@@ -53,15 +52,21 @@ COPY --from=frontend /app/public ./public
 # Install PHP dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-# Fix permissions for Laravel storage and cache folders
+# Ensure Laravel cache/storage directories exist
 RUN mkdir -p bootstrap/cache storage/framework/{views,cache,sessions} storage/logs \
  && chmod -R 775 storage bootstrap/cache database \
  && chown -R www-data:www-data storage bootstrap/cache database
 
-# Expose port
 EXPOSE 10000
 
-# Run migrations and start server at runtime (not at build time)
-CMD php artisan migrate --force && \
+# ------------------------------
+# Runtime: ensure paths & caches
+# ------------------------------
+CMD mkdir -p bootstrap/cache storage/framework/{views,cache,sessions} storage/logs && \
+    chmod -R 775 storage bootstrap/cache database && \
+    php artisan config:clear && \
+    php artisan view:clear && \
+    php artisan cache:clear && \
+    php artisan migrate --force && \
     php artisan receipts:migrate-to-base64 && \
     php artisan serve --host=0.0.0.0 --port=10000
