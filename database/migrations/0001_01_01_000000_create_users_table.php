@@ -17,6 +17,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+
+            // Combined fields
+            $table->string('role')->default('vendedora'); // role field
+            $table->boolean('approved')->default(false); // approved field
+
             $table->rememberToken();
             $table->timestamps();
         });
