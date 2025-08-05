@@ -14,14 +14,14 @@ class NotificationService
         $this->createNotification(
             $sale->user_id,
             'sale_approved',
-            "Sua venda para {$sale->nome_cliente} foi aprovada! 🎉",
+            "Sua venda para {$sale->client_name} foi aprovada! 🎉",
             ['sale_id' => $sale->id]
         );
     }
 
     public function notifySaleRejected(Sale $sale, $reason = null)
     {
-        $message = "Sua venda para {$sale->nome_cliente} foi recusada.";
+        $message = "Sua venda para {$sale->client_name} foi recusada.";
         if ($reason) {
             $message .= " Motivo: {$reason}";
         }
@@ -39,7 +39,7 @@ class NotificationService
         $admins = User::whereIn('role', ['admin', 'financeiro'])->get();
         
         foreach ($admins as $admin) {
-            $vendedoraName = $sale->vendedora?->name ?? 'usuário desconhecido';
+            $vendedoraName = $sale->user?->name ?? 'usuário desconhecido';
 
             $this->createNotification(
                 $admin->id,
@@ -377,6 +377,162 @@ class NotificationService
         } catch (\Exception $e) {
             Log::error('Final payment reminder notification error', [
                 'sale_id' => $sale->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Notify when payment is uploaded by client
+     */
+    public function notifyPaymentUploaded(Sale $sale)
+    {
+        try {
+            // Notify finance admins about new payment proof
+            $financeAdmins = User::whereIn('role', ['admin', 'financeiro', 'finance_admin'])->get();
+            
+            foreach ($financeAdmins as $admin) {
+                $this->createNotification(
+                    $admin->id,
+                    'payment_uploaded',
+                    "Novo comprovante de pagamento enviado para pedido #{$sale->unique_token} 💰",
+                    [
+                        'sale_id' => $sale->id,
+                        'order_token' => $sale->unique_token
+                    ]
+                );
+            }
+
+            return ['success' => true];
+        } catch (\Exception $e) {
+            Log::error('Payment uploaded notification error', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Notify when photo is approved by client
+     */
+    public function notifyPhotoApproved(Sale $sale)
+    {
+        try {
+            // Send internal notification to seller
+            $this->createNotification(
+                $sale->user_id,
+                'photo_approved',
+                "Foto do pedido #{$sale->unique_token} foi aprovada pelo cliente! ✅",
+                ['sale_id' => $sale->id, 'order_token' => $sale->unique_token]
+            );
+
+            // Notify production admin
+            if ($sale->production_admin_id) {
+                $this->createNotification(
+                    $sale->production_admin_id,
+                    'photo_approved',
+                    "Cliente aprovou a foto do pedido #{$sale->unique_token} 📸✅",
+                    ['sale_id' => $sale->id, 'order_token' => $sale->unique_token]
+                );
+            }
+
+            // Send WhatsApp confirmation to client
+            if ($sale->needsFinalPayment()) {
+                $whatsAppService = app(WhatsAppService::class);
+                $whatsAppResult = $whatsAppService->sendFinalPaymentReminder($sale);
+                
+                if (!$whatsAppResult['success']) {
+                    Log::warning('WhatsApp final payment reminder failed', [
+                        'sale_id' => $sale->id,
+                        'error' => $whatsAppResult['message']
+                    ]);
+                }
+            }
+
+            return ['success' => true];
+        } catch (\Exception $e) {
+            Log::error('Photo approved notification error', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Notify when photo is rejected by client
+     */
+    public function notifyPhotoRejected(Sale $sale, $reason)
+    {
+        try {
+            // Send internal notification to seller
+            $this->createNotification(
+                $sale->user_id,
+                'photo_rejected',
+                "Cliente solicitou ajuste na foto do pedido #{$sale->unique_token}. Motivo: {$reason}",
+                [
+                    'sale_id' => $sale->id,
+                    'order_token' => $sale->unique_token,
+                    'reason' => $reason
+                ]
+            );
+
+            // Notify production admin
+            if ($sale->production_admin_id) {
+                $this->createNotification(
+                    $sale->production_admin_id,
+                    'photo_rejected',
+                    "Cliente rejeitou a foto do pedido #{$sale->unique_token}. Motivo: {$reason} ❌",
+                    [
+                        'sale_id' => $sale->id,
+                        'order_token' => $sale->unique_token,
+                        'reason' => $reason
+                    ]
+                );
+            }
+
+            return ['success' => true];
+        } catch (\Exception $e) {
+            Log::error('Photo rejected notification error', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Notify admins when a new user registers
+     */
+    public function notifyNewUserRegistration(User $newUser)
+    {
+        try {
+            // Notify all admins about new user registration
+            $admins = User::whereIn('role', ['admin'])->get();
+            
+            foreach ($admins as $admin) {
+                $this->createNotification(
+                    $admin->id,
+                    'new_user_registration',
+                    "Nova vendedora registrada: {$newUser->name} ({$newUser->email}) - Aguardando aprovação 👩‍💼",
+                    [
+                        'user_id' => $newUser->id,
+                        'user_name' => $newUser->name,
+                        'user_email' => $newUser->email
+                    ]
+                );
+            }
+
+            return ['success' => true];
+        } catch (\Exception $e) {
+            Log::error('New user registration notification error', [
+                'user_id' => $newUser->id,
                 'error' => $e->getMessage()
             ]);
             

@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+
 export default function ApplicationLogo(props) {
     return (
         <div className="flex items-center space-x-2">

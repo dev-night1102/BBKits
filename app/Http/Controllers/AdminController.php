@@ -336,27 +336,73 @@ class AdminController extends Controller
      */
     private function calculatePerformanceMetrics($dateFilter)
     {
-        // Average order processing time
-        $avgProcessingTime = Sale::whereNotNull('shipped_at')
-            ->whereNotNull('created_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(DAY, created_at, shipped_at)) as avg_days')
-            ->value('avg_days') ?? 0;
+        // Database-agnostic approach for calculating time differences
+        $dbDriver = config('database.default');
         
-        // Average time in each stage
-        $avgStageTime = [
-            'payment_to_production' => Sale::whereNotNull('production_started_at')
-                ->whereNotNull('initial_payment_approved_at')
-                ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, initial_payment_approved_at, production_started_at)) as avg_hours')
-                ->value('avg_hours') ?? 0,
-            'production_to_photo' => Sale::whereNotNull('photo_sent_at')
-                ->whereNotNull('production_started_at')
-                ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, production_started_at, photo_sent_at)) as avg_hours')
-                ->value('avg_hours') ?? 0,
-            'photo_to_shipping' => Sale::whereNotNull('shipped_at')
-                ->whereNotNull('photo_approved_at')
-                ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, photo_approved_at, shipped_at)) as avg_hours')
-                ->value('avg_hours') ?? 0,
-        ];
+        if ($dbDriver === 'mysql') {
+            // MySQL version with TIMESTAMPDIFF
+            $avgProcessingTime = Sale::whereNotNull('shipped_at')
+                ->whereNotNull('created_at')
+                ->selectRaw('AVG(TIMESTAMPDIFF(DAY, created_at, shipped_at)) as avg_days')
+                ->value('avg_days') ?? 0;
+            
+            $avgStageTime = [
+                'payment_to_production' => Sale::whereNotNull('production_started_at')
+                    ->whereNotNull('initial_payment_approved_at')
+                    ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, initial_payment_approved_at, production_started_at)) as avg_hours')
+                    ->value('avg_hours') ?? 0,
+                'production_to_photo' => Sale::whereNotNull('photo_sent_at')
+                    ->whereNotNull('production_started_at')
+                    ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, production_started_at, photo_sent_at)) as avg_hours')
+                    ->value('avg_hours') ?? 0,
+                'photo_to_shipping' => Sale::whereNotNull('shipped_at')
+                    ->whereNotNull('photo_approved_at')
+                    ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, photo_approved_at, shipped_at)) as avg_hours')
+                    ->value('avg_hours') ?? 0,
+            ];
+        } else {
+            // SQLite/PostgreSQL version - calculate in PHP
+            $shippedSales = Sale::whereNotNull('shipped_at')
+                ->whereNotNull('created_at')
+                ->select(['created_at', 'shipped_at'])
+                ->get();
+            
+            $avgProcessingTime = 0;
+            if ($shippedSales->count() > 0) {
+                $totalDays = $shippedSales->sum(function ($sale) {
+                    return Carbon::parse($sale->shipped_at)->diffInDays(Carbon::parse($sale->created_at));
+                });
+                $avgProcessingTime = round($totalDays / $shippedSales->count(), 1);
+            }
+            
+            // Calculate stage times in PHP
+            $avgStageTime = [
+                'payment_to_production' => $this->calculateAverageHours(
+                    Sale::whereNotNull('production_started_at')
+                        ->whereNotNull('initial_payment_approved_at')
+                        ->select(['initial_payment_approved_at', 'production_started_at'])
+                        ->get(),
+                    'initial_payment_approved_at',
+                    'production_started_at'
+                ),
+                'production_to_photo' => $this->calculateAverageHours(
+                    Sale::whereNotNull('photo_sent_at')
+                        ->whereNotNull('production_started_at')
+                        ->select(['production_started_at', 'photo_sent_at'])
+                        ->get(),
+                    'production_started_at',
+                    'photo_sent_at'
+                ),
+                'photo_to_shipping' => $this->calculateAverageHours(
+                    Sale::whereNotNull('shipped_at')
+                        ->whereNotNull('photo_approved_at')
+                        ->select(['photo_approved_at', 'shipped_at'])
+                        ->get(),
+                    'photo_approved_at',
+                    'shipped_at'
+                ),
+            ];
+        }
         
         // Conversion rates
         $totalOrders = Sale::count();
@@ -370,12 +416,21 @@ class AdminController extends Controller
                  Sale::where('order_status', 'photo_sent')->count()) * 100 : 0,
         ];
         
-        // Daily/weekly trends
-        $dailyOrders = Sale::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-            ->where('created_at', '>=', Carbon::now()->subDays(30))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
+        // Daily/weekly trends (database-agnostic)
+        if ($dbDriver === 'mysql') {
+            $dailyOrders = Sale::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                ->where('created_at', '>=', Carbon::now()->subDays(30))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get();
+        } else {
+            // SQLite version using strftime
+            $dailyOrders = Sale::selectRaw("strftime('%Y-%m-%d', created_at) as date, COUNT(*) as count")
+                ->where('created_at', '>=', Carbon::now()->subDays(30))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get();
+        }
         
         return [
             'avg_processing_time_days' => round($avgProcessingTime, 1),
@@ -383,6 +438,22 @@ class AdminController extends Controller
             'conversion_rates' => $conversionRates,
             'daily_trends' => $dailyOrders,
         ];
+    }
+
+    /**
+     * Helper method to calculate average hours between two timestamps
+     */
+    private function calculateAverageHours($collection, $startField, $endField)
+    {
+        if ($collection->count() === 0) {
+            return 0;
+        }
+
+        $totalHours = $collection->sum(function ($item) use ($startField, $endField) {
+            return Carbon::parse($item->$endField)->diffInHours(Carbon::parse($item->$startField));
+        });
+
+        return round($totalHours / $collection->count(), 1);
     }
     
     /**

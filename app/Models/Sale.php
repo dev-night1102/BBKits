@@ -106,7 +106,11 @@ class Sale extends Model
         'whatsapp_payment_rejected_sent',
         'whatsapp_payment_rejected_sent_at',
         'whatsapp_final_payment_reminder_sent',
-        'whatsapp_final_payment_reminder_sent_at'
+        'whatsapp_final_payment_reminder_sent_at',
+        // Processing fields
+        'is_processing',
+        'processing_started_at',
+        'processing_token'
     ];
 
     protected $casts = [
@@ -140,6 +144,9 @@ class Sale extends Model
         'whatsapp_payment_rejected_sent_at' => 'datetime',
         'whatsapp_final_payment_reminder_sent' => 'boolean',
         'whatsapp_final_payment_reminder_sent_at' => 'datetime',
+        // Processing casts
+        'is_processing' => 'boolean',
+        'processing_started_at' => 'datetime',
         // Existing casts
         'total_amount' => 'decimal:2',
         'shipping_amount' => 'decimal:2',

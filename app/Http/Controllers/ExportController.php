@@ -136,12 +136,29 @@ class ExportController extends Controller
     public function exportPerformanceMetrics(Request $request)
     {
         $dateFilter = $request->input('date_filter', 'current_month');
+        $dbDriver = config('database.default');
         
-        // Get performance data
-        $avgProcessingTime = Sale::whereNotNull('shipped_at')
-            ->whereNotNull('created_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(DAY, created_at, shipped_at)) as avg_days')
-            ->value('avg_days') ?? 0;
+        // Get performance data - database agnostic
+        if ($dbDriver === 'mysql') {
+            $avgProcessingTime = Sale::whereNotNull('shipped_at')
+                ->whereNotNull('created_at')
+                ->selectRaw('AVG(TIMESTAMPDIFF(DAY, created_at, shipped_at)) as avg_days')
+                ->value('avg_days') ?? 0;
+        } else {
+            // SQLite version - calculate in PHP
+            $shippedSales = Sale::whereNotNull('shipped_at')
+                ->whereNotNull('created_at')
+                ->select(['created_at', 'shipped_at'])
+                ->get();
+            
+            $avgProcessingTime = 0;
+            if ($shippedSales->count() > 0) {
+                $totalDays = $shippedSales->sum(function ($sale) {
+                    return Carbon::parse($sale->shipped_at)->diffInDays(Carbon::parse($sale->created_at));
+                });
+                $avgProcessingTime = round($totalDays / $shippedSales->count(), 1);
+            }
+        }
         
         $totalOrders = Sale::count();
         $shippedOrders = Sale::where('order_status', 'shipped')->count();
@@ -152,29 +169,43 @@ class ExportController extends Controller
             'completion_rate' => $totalOrders > 0 ? ($shippedOrders / $totalOrders) * 100 : 0,
         ];
         
-        // Stage processing times
-        $stageMetrics = Sale::selectRaw('
-            order_status,
-            COUNT(*) as count,
-            AVG(CASE 
-                WHEN order_status != "pending_payment" AND initial_payment_approved_at IS NOT NULL 
-                THEN TIMESTAMPDIFF(HOUR, created_at, initial_payment_approved_at) 
-            END) as avg_payment_time,
-            AVG(CASE 
-                WHEN production_started_at IS NOT NULL AND initial_payment_approved_at IS NOT NULL 
-                THEN TIMESTAMPDIFF(HOUR, initial_payment_approved_at, production_started_at) 
-            END) as avg_production_start_time,
-            AVG(CASE 
-                WHEN photo_sent_at IS NOT NULL AND production_started_at IS NOT NULL 
-                THEN TIMESTAMPDIFF(HOUR, production_started_at, photo_sent_at) 
-            END) as avg_photo_time,
-            AVG(CASE 
-                WHEN shipped_at IS NOT NULL AND photo_approved_at IS NOT NULL 
-                THEN TIMESTAMPDIFF(HOUR, photo_approved_at, shipped_at) 
-            END) as avg_shipping_time
-        ')
-        ->groupBy('order_status')
-        ->get();
+        // Stage processing times - simplified for database compatibility
+        if ($dbDriver === 'mysql') {
+            $stageMetrics = Sale::selectRaw('
+                order_status,
+                COUNT(*) as count,
+                AVG(CASE 
+                    WHEN order_status != "pending_payment" AND initial_payment_approved_at IS NOT NULL 
+                    THEN TIMESTAMPDIFF(HOUR, created_at, initial_payment_approved_at) 
+                END) as avg_payment_time,
+                AVG(CASE 
+                    WHEN production_started_at IS NOT NULL AND initial_payment_approved_at IS NOT NULL 
+                    THEN TIMESTAMPDIFF(HOUR, initial_payment_approved_at, production_started_at) 
+                END) as avg_production_start_time,
+                AVG(CASE 
+                    WHEN photo_sent_at IS NOT NULL AND production_started_at IS NOT NULL 
+                    THEN TIMESTAMPDIFF(HOUR, production_started_at, photo_sent_at) 
+                END) as avg_photo_time,
+                AVG(CASE 
+                    WHEN shipped_at IS NOT NULL AND photo_approved_at IS NOT NULL 
+                    THEN TIMESTAMPDIFF(HOUR, photo_approved_at, shipped_at) 
+                END) as avg_shipping_time
+            ')
+            ->groupBy('order_status')
+            ->get();
+        } else {
+            // SQLite version - basic metrics without complex time calculations
+            $stageMetrics = Sale::selectRaw('order_status, COUNT(*) as count')
+                ->groupBy('order_status')
+                ->get()
+                ->map(function ($item) {
+                    $item->avg_payment_time = 0;
+                    $item->avg_production_start_time = 0;
+                    $item->avg_photo_time = 0;
+                    $item->avg_shipping_time = 0;
+                    return $item;
+                });
+        }
         
         $csv = "Métrica,Valor\n";
         $csv .= "Tempo Médio de Processamento (dias)," . round($avgProcessingTime, 2) . "\n";

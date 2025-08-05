@@ -12,13 +12,7 @@ class SaleObserver
      */
     public function creating(Sale $sale): void
     {
-        // Generate unique token for personalized client page
-        if (!$sale->unique_token) {
-            do {
-                $token = Str::random(32);
-            } while (Sale::where('unique_token', $token)->exists());
-            
-            $sale->unique_token = $token;
-        }
+        // Token generation is handled by the model's boot method
+        // This observer can be used for other business logic if needed
     }
 }

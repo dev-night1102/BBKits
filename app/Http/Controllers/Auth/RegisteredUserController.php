@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,9 +41,15 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => 'vendedora', // Default role for new registrations
+            'approved' => false, // Requires admin approval
         ]);
 
         event(new Registered($user));
+
+        // Notify admins about new user registration
+        $notificationService = app(NotificationService::class);
+        $notificationService->notifyNewUserRegistration($user);
 
         Auth::login($user);
 
