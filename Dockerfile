@@ -43,20 +43,22 @@ COPY . .
 # Copy built frontend
 COPY --from=frontend /app/public ./public
 
-# Create database if using SQLite
+# Create SQLite database (if used)
 RUN mkdir -p database && touch database/database.sqlite && chown -R www-data:www-data database
 
 # Install PHP dependencies
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-# Ensure Laravel cache directories exist at build time
+# Ensure Laravel cache/storage folders exist
 RUN mkdir -p bootstrap/cache storage/framework/{views,cache,sessions} storage/logs \
  && chmod -R 775 storage bootstrap/cache database \
  && chown -R www-data:www-data storage bootstrap/cache database
 
 EXPOSE 10000
 
-# Runtime commands
+# ------------------------------
+# 3. Runtime Commands
+# ------------------------------
 CMD mkdir -p bootstrap/cache storage/framework/{views,cache,sessions} storage/logs && \
     chmod -R 775 storage bootstrap/cache database && \
     chown -R www-data:www-data storage bootstrap/cache database && \
@@ -65,5 +67,6 @@ CMD mkdir -p bootstrap/cache storage/framework/{views,cache,sessions} storage/lo
     php artisan view:clear || true && \
     php artisan optimize && \
     php artisan migrate --force && \
+    php artisan db:seed --force && \
     php artisan receipts:migrate-to-base64 && \
     php artisan serve --host=0.0.0.0 --port=10000
