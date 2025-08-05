@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -12,8 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add new role values to enum by modifying the column
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('vendedora', 'admin', 'financeiro', 'finance_admin', 'production_admin') NOT NULL DEFAULT 'vendedora'");
+        if (Schema::hasColumn('users', 'role')) {
+            Schema::table('users', function (Blueprint $table) {
+                // SQLite doesn't support enum, so we convert to string
+                // This works for both MySQL (via doctrine/dbal) and SQLite
+                $table->string('role')->default('vendedora')->change();
+            });
+        }
     }
 
     /**
@@ -21,7 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert to original enum values
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('vendedora', 'admin', 'financeiro') NOT NULL DEFAULT 'vendedora'");
+        if (Schema::hasColumn('users', 'role')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('role')->default('vendedora')->change();
+            });
+        }
     }
 };
