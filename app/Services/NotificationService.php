@@ -60,7 +60,7 @@ class NotificationService
         );
     }
 
-    protected function createNotification($userId, $type, $message, $data = [])
+    public function createNotification($userId, $type, $message, $data = [])
     {
         return Notification::create([
             'user_id' => $userId,

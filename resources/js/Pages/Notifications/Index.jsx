@@ -4,7 +4,7 @@ import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import PrimaryButton from '@/Components/PrimaryButton';
 
-export default function Index({ auth, notifications }) {
+export default function Index({ auth, notifications = [] }) {
     const [processing, setProcessing] = useState(false);
 
     const markAsRead = (notificationId) => {

@@ -193,6 +193,23 @@ Route::middleware(['auth', 'approved'])->group(function () {
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('test-pdf');
         return $pdf->download('test-bbkits.pdf');
     })->name('test.pdf');
+    
+    // API endpoint for checking approval status
+    Route::get('/api/check-approval-status', function () {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['approved' => false]);
+        }
+        
+        // Check if user was recently approved
+        $cacheKey = 'user_approved_' . $user->id;
+        if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+            return response()->json(['approved' => true, 'recently_approved' => true]);
+        }
+        
+        return response()->json(['approved' => $user->approved]);
+    })->name('api.check-approval-status');
 });
 
 require __DIR__.'/auth.php';

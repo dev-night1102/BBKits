@@ -282,7 +282,24 @@ class AdminController extends Controller
             'approved_by' => auth()->id(),
         ]);
 
-        return redirect()->back()->with('success', 'Usuário aprovado com sucesso.');
+        // Send notification to the approved user
+        $notificationService = app(\App\Services\NotificationService::class);
+        $notificationService->createNotification(
+            $user->id,
+            'user_approved',
+            'Parabéns! Sua conta foi aprovada. Você já pode acessar o sistema! 🎉',
+            ['approved_by' => auth()->user()->name]
+        );
+
+        // If the user has a remember token, they might have a session waiting
+        // We'll set a flag that the auth system can check
+        \Illuminate\Support\Facades\Cache::put(
+            'user_approved_' . $user->id, 
+            true, 
+            now()->addMinutes(10)
+        );
+
+        return redirect()->back()->with('success', 'Usuário aprovado com sucesso. O usuário foi notificado e pode acessar o sistema imediatamente.');
     }
 
     public function rejectUser(User $user)

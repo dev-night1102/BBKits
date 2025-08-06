@@ -27,7 +27,7 @@ export default function NotificationBell() {
     const fetchNotifications = async () => {
         try {
             const response = await axios.get('/notifications');
-            setNotifications(response.data.notifications);
+            setNotifications(response.data.notifications || []);
         } catch (error) {
             // Silently handle errors
             setNotifications([]);

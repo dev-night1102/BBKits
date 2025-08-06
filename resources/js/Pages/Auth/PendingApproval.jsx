@@ -1,7 +1,51 @@
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 export default function PendingApproval() {
+    const [checking, setChecking] = useState(false);
+    const [countdown, setCountdown] = useState(10);
+
+    useEffect(() => {
+        // Check approval status every 10 seconds
+        const checkApproval = async () => {
+            if (checking) return;
+            
+            setChecking(true);
+            try {
+                const response = await axios.get('/api/check-approval-status');
+                if (response.data.approved) {
+                    // User has been approved, redirect to dashboard
+                    router.visit('/dashboard');
+                }
+            } catch (error) {
+                console.error('Error checking approval status:', error);
+            } finally {
+                setChecking(false);
+            }
+        };
+
+        // Initial check
+        checkApproval();
+
+        // Set up interval for periodic checks
+        const interval = setInterval(() => {
+            checkApproval();
+            setCountdown(10); // Reset countdown
+        }, 10000);
+
+        // Countdown timer
+        const countdownInterval = setInterval(() => {
+            setCountdown(prev => prev > 0 ? prev - 1 : 10);
+        }, 1000);
+
+        return () => {
+            clearInterval(interval);
+            clearInterval(countdownInterval);
+        };
+    }, [checking]);
+
     return (
         <GuestLayout>
             <Head title="Aguardando Aprovação" />
@@ -30,6 +74,14 @@ export default function PendingApproval() {
                         <p className="text-blue-800 text-sm font-medium">
                             💡 Dica: Enquanto aguarda, entre em contato com seu supervisor ou administrador para acelerar o processo de aprovação.
                         </p>
+                    </div>
+
+                    <div className="mt-4 text-sm text-gray-500">
+                        {checking ? (
+                            <span>Verificando status de aprovação...</span>
+                        ) : (
+                            <span>Próxima verificação em {countdown} segundos</span>
+                        )}
                     </div>
                 </div>
 

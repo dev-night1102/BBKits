@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
             'production.access' => \App\Http\Middleware\EnsureUserCanManageProduction::class,
+            'finance.access' => \App\Http\Middleware\FinanceAccess::class,
+            'finance.admin' => \App\Http\Middleware\FinanceAdminMiddleware::class,
+            'production.admin' => \App\Http\Middleware\ProductionAdminMiddleware::class,
         ]);
     })
     ->withCommands([
