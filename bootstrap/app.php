@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
+            'production.access' => \App\Http\Middleware\EnsureUserCanManageProduction::class,
         ]);
     })
     ->withCommands([

@@ -136,12 +136,45 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 .nav-link {
                     position: relative;
-                    padding: 12px 20px;
-                    border-radius: 15px;
-                    font-weight: 600;
+                    padding: 6px 10px;
+                    border-radius: 12px;
+                    font-weight: 500;
+                    font-size: 0.75rem;
                     color: var(--text-dark);
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     overflow: hidden;
+                    white-space: nowrap;
+                }
+                
+                @media (min-width: 640px) {
+                    .nav-link {
+                        padding: 6px 12px;
+                        font-size: 0.8125rem;
+                    }
+                }
+                
+                @media (min-width: 768px) {
+                    .nav-link {
+                        padding: 8px 14px;
+                        font-size: 0.875rem;
+                        border-radius: 14px;
+                    }
+                }
+                
+                @media (min-width: 1024px) {
+                    .nav-link {
+                        padding: 10px 16px;
+                        font-size: 0.9375rem;
+                        font-weight: 600;
+                        border-radius: 15px;
+                    }
+                }
+                
+                @media (min-width: 1280px) {
+                    .nav-link {
+                        padding: 12px 20px;
+                        font-size: 1rem;
+                    }
                 }
 
                 .nav-link::before {
@@ -163,8 +196,15 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 .nav-link:hover {
                     color: var(--primary-color);
-                    transform: translateY(-3px);
-                    box-shadow: 0 10px 25px rgba(212, 165, 116, 0.2);
+                    transform: translateY(-2px);
+                    box-shadow: 0 5px 15px rgba(212, 165, 116, 0.2);
+                }
+                
+                @media (min-width: 1024px) {
+                    .nav-link:hover {
+                        transform: translateY(-3px);
+                        box-shadow: 0 10px 25px rgba(212, 165, 116, 0.2);
+                    }
                 }
 
                 .nav-link.active {
@@ -177,11 +217,25 @@ export default function AuthenticatedLayout({ header, children }) {
                     background: var(--gradient-soft);
                     border: 2px solid transparent;
                     background-clip: padding-box;
-                    border-radius: 20px;
-                    padding: 8px 16px;
+                    border-radius: 12px;
+                    padding: 4px 8px;
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     position: relative;
                     overflow: hidden;
+                }
+                
+                @media (min-width: 768px) {
+                    .user-dropdown {
+                        padding: 6px 12px;
+                        border-radius: 16px;
+                    }
+                }
+                
+                @media (min-width: 1024px) {
+                    .user-dropdown {
+                        padding: 8px 16px;
+                        border-radius: 20px;
+                    }
                 }
 
                 .user-dropdown::before {
@@ -192,7 +246,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     right: -2px;
                     bottom: -2px;
                     background: var(--gradient);
-                    border-radius: 20px;
+                    border-radius: inherit;
                     z-index: -1;
                     opacity: 0;
                     transition: opacity 0.3s ease;
@@ -263,10 +317,17 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 .mobile-toggle {
                     background: var(--gradient-soft);
-                    border-radius: 15px;
-                    padding: 8px;
+                    border-radius: 12px;
+                    padding: 6px;
                     transition: all 0.3s ease;
                     border: 2px solid transparent;
+                }
+                
+                @media (min-width: 640px) {
+                    .mobile-toggle {
+                        padding: 8px;
+                        border-radius: 15px;
+                    }
                 }
 
                 .mobile-toggle:hover {
@@ -366,6 +427,60 @@ export default function AuthenticatedLayout({ header, children }) {
                 ::-webkit-scrollbar-thumb:hover {
                     background: var(--accent-color);
                 }
+                
+                /* Responsive icon sizes */
+                .nav-icon {
+                    width: 0.875rem;
+                    height: 0.875rem;
+                }
+                
+                @media (min-width: 768px) {
+                    .nav-icon {
+                        width: 1rem;
+                        height: 1rem;
+                    }
+                }
+                
+                @media (min-width: 1024px) {
+                    .nav-icon {
+                        width: 1.125rem;
+                        height: 1.125rem;
+                    }
+                }
+                
+                /* Hide text on smaller screens */
+                .nav-text {
+                    display: none;
+                }
+                
+                @media (min-width: 1024px) {
+                    .nav-text {
+                        display: inline;
+                    }
+                }
+                
+                /* Adjust navbar height */
+                .navbar-height {
+                    height: 3rem;
+                }
+                
+                @media (min-width: 640px) {
+                    .navbar-height {
+                        height: 3.5rem;
+                    }
+                }
+                
+                @media (min-width: 768px) {
+                    .navbar-height {
+                        height: 3.75rem;
+                    }
+                }
+                
+                @media (min-width: 1024px) {
+                    .navbar-height {
+                        height: 4rem;
+                    }
+                }
             `}</style>
 
             <div className="min-h-screen premium-bg">
@@ -392,31 +507,31 @@ export default function AuthenticatedLayout({ header, children }) {
                         isScrolled ? "navbar-scrolled" : ""
                     }`}
                 >
-                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                        <div className="flex h-16 justify-between items-center">
-                            <div className="flex items-center">
+                    <div className="mx-auto w-full max-w-[100%] px-2 sm:px-3 md:px-4 lg:px-6 xl:max-w-7xl xl:px-8">
+                        <div className="navbar-height flex justify-between items-center">
+                            <div className="flex items-center flex-shrink-0">
                                 <div className="flex shrink-0 items-center">
                                     <Link href="/" className="logo-container">
                                         <img
                                             src="/images/logo.webp"
                                             alt="BBKits Logo"
-                                            className="object-contain drop-shadow-xl hover:drop-shadow-2xl transition-all duration-500 hover:scale-110 hover:rotate-3 filter hover:brightness-110 hover:saturate-125 cursor-pointer animate-pulse hover:animate-none rounded-xl bg-white from-white/20 to-transparent backdrop-blur-sm border border-white/30 p-1 shadow-xl hover:shadow-yellow-400/50"
+                                            className="h-6 sm:h-7 md:h-8 lg:h-9 xl:h-10 w-auto object-contain drop-shadow-xl hover:drop-shadow-2xl transition-all duration-500 hover:scale-110 hover:rotate-3 filter hover:brightness-110 hover:saturate-125 cursor-pointer animate-pulse hover:animate-none rounded-lg sm:rounded-xl bg-white from-white/20 to-transparent backdrop-blur-sm border border-white/30 p-0.5 sm:p-0.75 lg:p-1 shadow-xl hover:shadow-yellow-400/50"
                                         />
                                     </Link>
                                 </div>
 
-                                <div className="hidden space-x-2 sm:-my-px sm:ms-10 sm:flex">
+                                <div className="hidden md:flex items-center space-x-0.5 lg:space-x-1 xl:space-x-2 ms-2 sm:ms-3 md:ms-4 lg:ms-6 xl:ms-10">
                                     <NavLink
                                         href={route("dashboard")}
                                         active={route().current("dashboard")}
-                                        className={`nav-link flex items-center gap-2 ${
+                                        className={`nav-link flex items-center gap-0.5 lg:gap-1 xl:gap-2 ${
                                             route().current("dashboard")
                                                 ? "active"
                                                 : ""
                                         }`}
                                     >
                                         <svg
-                                            className="w-4 h-4 icon-hover"
+                                            className="nav-icon icon-hover"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -428,20 +543,20 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
                                             />
                                         </svg>
-                                        Dashboard
+                                        <span className="nav-text">Dashboard</span>
                                     </NavLink>
 
                                     <NavLink
                                         href={route("sales.index")}
                                         active={route().current("sales.*")}
-                                        className={`nav-link flex items-center gap-2 ${
+                                        className={`nav-link flex items-center gap-0.5 lg:gap-1 xl:gap-2 ${
                                             route().current("sales.*")
                                                 ? "active"
                                                 : ""
                                         }`}
                                     >
                                         <svg
-                                            className="w-4 h-4 icon-hover"
+                                            className="nav-icon icon-hover"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -453,7 +568,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
                                             />
                                         </svg>
-                                        💼 Vendas
+                                        <span className="nav-text">💼 Vendas</span>
                                     </NavLink>
 
                                     {/* Finance Admin Navigation */}
@@ -461,14 +576,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <NavLink
                                             href={route("finance.orders.index")}
                                             active={route().current("finance.*")}
-                                            className={`nav-link flex items-center gap-2 ${
+                                            className={`nav-link flex items-center gap-0.5 lg:gap-1 xl:gap-2 ${
                                                 route().current("finance.*") ? "active" : ""
                                             }`}
                                         >
-                                            <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="nav-icon icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                                             </svg>
-                                            💰 Financeiro
+                                            <span className="nav-text">💰 Financeiro</span>
                                         </NavLink>
                                     )}
 
@@ -477,14 +592,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <NavLink
                                             href={route("production.orders.index")}
                                             active={route().current("production.*")}
-                                            className={`nav-link flex items-center gap-2 ${
+                                            className={`nav-link flex items-center gap-0.5 lg:gap-1 xl:gap-2 ${
                                                 route().current("production.*") ? "active" : ""
                                             }`}
                                         >
-                                            <svg className="w-4 h-4 icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="nav-icon icon-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 7.172V5L8 4z" />
                                             </svg>
-                                            🏭 Produção
+                                            <span className="nav-text">🏭 Produção</span>
                                         </NavLink>
                                     )}
 
@@ -496,7 +611,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 active={route().current(
                                                     "admin.dashboard"
                                                 )}
-                                                className={`nav-link flex items-center gap-2 ${
+                                                className={`nav-link flex items-center gap-0.5 lg:gap-1 xl:gap-2 ${
                                                     route().current(
                                                         "admin.dashboard"
                                                     )
@@ -505,7 +620,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 }`}
                                             >
                                                 <svg
-                                                    className="w-4 h-4 icon-hover"
+                                                    className="nav-icon icon-hover"
                                                     fill="none"
                                                     stroke="currentColor"
                                                     viewBox="0 0 24 24"
@@ -517,7 +632,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                                                     />
                                                 </svg>
-                                                🛡️ Admin
+                                                <span className="nav-text">🛡️ Admin</span>
                                             </NavLink>
 
                                             <NavLink
@@ -525,7 +640,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 active={route().current(
                                                     "admin.users.index"
                                                 )}
-                                                className={`nav-link flex items-center gap-2 ${
+                                                className={`nav-link flex items-center gap-0.5 lg:gap-1 xl:gap-2 ${
                                                     route().current(
                                                         "admin.users.index"
                                                     )
@@ -534,7 +649,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 }`}
                                             >
                                                 <svg
-                                                    className="w-4 h-4 icon-hover"
+                                                    className="nav-icon icon-hover"
                                                     fill="none"
                                                     stroke="currentColor"
                                                     viewBox="0 0 24 24"
@@ -543,10 +658,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         strokeLinecap="round"
                                                         strokeLinejoin="round"
                                                         strokeWidth={2}
-                                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M19 7.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
                                                     />
                                                 </svg>
-                                                👥 Gerenciar Usuários
+                                                <span className="nav-text">👥 Usuários</span>
                                             </NavLink>
 
                                             <NavLink
@@ -556,7 +671,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 active={route().current(
                                                     "admin.sales.*"
                                                 )}
-                                                className={`nav-link flex items-center gap-2 ${
+                                                className={`nav-link flex items-center gap-0.5 lg:gap-1 xl:gap-2 ${
                                                     route().current(
                                                         "admin.sales.*"
                                                     )
@@ -565,7 +680,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 }`}
                                             >
                                                 <svg
-                                                    className="w-4 h-4 icon-hover"
+                                                    className="nav-icon icon-hover"
                                                     fill="none"
                                                     stroke="currentColor"
                                                     viewBox="0 0 24 24"
@@ -577,16 +692,16 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                                                     />
                                                 </svg>
-                                                💰 Financeiro
+                                                <span className="nav-text">💰 Financeiro</span>
                                             </NavLink>
                                         </>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="hidden sm:ms-6 sm:flex sm:items-center gap-3">
+                            <div className="hidden md:flex md:items-center md:gap-2 lg:gap-3">
                                 <NotificationBell />
-                                <div className="relative ms-3">
+                                <div className="relative">
                                     <Dropdown>
                                         <Dropdown.Trigger>
                                             <span className="inline-flex rounded-md">
@@ -594,17 +709,17 @@ export default function AuthenticatedLayout({ header, children }) {
                                                     type="button"
                                                     className="user-dropdown"
                                                 >
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="user-avatar w-8 h-8 text-xs">
+                                                    <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3">
+                                                        <div className="user-avatar w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-[10px] sm:text-xs">
                                                             {user.name
                                                                 .charAt(0)
                                                                 .toUpperCase()}
                                                         </div>
-                                                        <span className="hidden md:block font-semibold text-gray-700">
+                                                        <span className="hidden lg:block font-medium text-xs lg:text-sm xl:text-base text-gray-700">
                                                             {user.name}
                                                         </span>
                                                         <svg
-                                                            className="-me-0.5 ms-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-180"
+                                                            className="-me-0.5 ms-1 lg:ms-2 h-3 w-3 lg:h-4 lg:w-4 transition-transform duration-300 group-hover:rotate-180"
                                                             fill="currentColor"
                                                             viewBox="0 0 20 20"
                                                         >
@@ -642,6 +757,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                                                 : user.role ===
                                                                   "admin"
                                                                 ? "Administrador"
+                                                                : user.role === "finance_admin"
+                                                                ? "Financeiro Admin"
+                                                                : user.role === "production_admin"
+                                                                ? "Produção Admin"
                                                                 : "Financeiro"}
                                                         </div>
                                                     </div>
@@ -692,7 +811,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </div>
                             </div>
 
-                            <div className="-me-2 flex items-center sm:hidden">
+                            <div className="-me-2 flex items-center md:hidden">
                                 <button
                                     onClick={() =>
                                         setShowingNavigationDropdown(
@@ -701,7 +820,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     }
                                     className="mobile-toggle"
                                 >
-                                    <div className="relative w-6 h-6">
+                                    <div className="relative w-5 h-5 sm:w-6 sm:h-6">
                                         <div
                                             className={`absolute inset-0 transition-all duration-300 ${
                                                 showingNavigationDropdown
@@ -710,7 +829,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                             }`}
                                         >
                                             <svg
-                                                className="h-6 w-6"
+                                                className="h-5 w-5 sm:h-6 sm:w-6"
                                                 stroke="currentColor"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
@@ -731,7 +850,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                             }`}
                                         >
                                             <svg
-                                                className="h-6 w-6"
+                                                className="h-5 w-5 sm:h-6 sm:w-6"
                                                 stroke="currentColor"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
@@ -751,7 +870,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
 
                     <div
-                        className={`sm:hidden mobile-menu transition-all duration-500 ease-in-out overflow-hidden ${
+                        className={`md:hidden mobile-menu transition-all duration-500 ease-in-out overflow-hidden ${
                             showingNavigationDropdown
                                 ? "max-h-screen opacity-100"
                                 : "max-h-0 opacity-0"
@@ -871,7 +990,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
                                                 strokeWidth={2}
-                                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M19 7.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
                                             />
                                         </svg>
                                         👥 Gerenciar Usuários
@@ -922,6 +1041,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 ? "Vendedora BBKits"
                                                 : user.role === "admin"
                                                 ? "Administrador"
+                                                : user.role === "finance_admin"
+                                                ? "Financeiro Admin"
+                                                : user.role === "production_admin"
+                                                ? "Produção Admin"
                                                 : "Financeiro"}
                                         </div>
                                     </div>
@@ -975,14 +1098,14 @@ export default function AuthenticatedLayout({ header, children }) {
                 </nav>
 
                 {header && (
-                    <header className="header-section mt-16 border-b border-pink-100/50 relative z-10">
-                        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 relative z-10">
+                    <header className="header-section mt-12 sm:mt-14 md:mt-15 lg:mt-16 border-b border-pink-100/50 relative z-10">
+                        <div className="mx-auto max-w-7xl px-4 py-4 sm:py-5 md:py-6 sm:px-6 lg:px-8 relative z-10">
                             <div className="animate-fadeInUp">{header}</div>
                         </div>
                     </header>
                 )}
 
-                <main className="pt-16 min-h-screen main-content">
+                <main className="pt-12 sm:pt-14 md:pt-15 lg:pt-16 min-h-screen main-content">
                     <div className="animate-fadeInUp delay-200 relative z-10">
                         {children}
                     </div>
